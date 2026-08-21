@@ -50,6 +50,7 @@
       <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none">
       <button id="btn-export" class="btn-outline">⬇ Export Excel</button>
       <button id="btn-clear-data" class="btn-outline btn-danger-outline" title="Delete all ticket data">🗑 Clear Data</button>
+      <button id="btn-excl-sources" class="btn-outline" title="Exclude sources from stats">⚙ Stats Filter</button>
     </div>
   </header>
 
@@ -157,6 +158,9 @@
       </select>
       <button id="btn-clear-filters" class="btn-secondary">↺ Clear</button>
       <button id="btn-duplicates" class="btn-secondary">⚠ Duplicates</button>
+      <button id="btn-merge-dupes" class="btn-secondary">⚡ Merge Dupes</button>
+      <button id="btn-expired-awaiting" class="btn-secondary">⏰ Expired Awaiting</button>
+      <button id="btn-resolve-expired" class="btn-secondary" style="display:none">✅ Resolve All Expired</button>
       <button id="btn-add-ticket" class="btn-primary">+ Add Ticket</button>
     </div>
     <div class="table-meta">
@@ -231,6 +235,24 @@
       <div class="modal-footer">
         <button id="btn-cancel-ticket" class="btn-secondary">Cancel</button>
         <button id="btn-save-ticket" class="btn-primary">Save Ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exclude Sources Modal -->
+  <div id="excl-modal-overlay" class="modal-overlay">
+    <div class="modal" style="width:420px">
+      <div class="modal-header">
+        <h2>⚙ Stats Filter — Exclude Sources</h2>
+        <button class="modal-close" onclick="closeExclModal()">✕</button>
+      </div>
+      <div class="modal-body" id="excl-modal-body" style="max-height:360px">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:8px">Checked sources are excluded from dashboard stats. Tickets still appear in the list.</p>
+        <div id="excl-source-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeExclModal()">Close</button>
+        <button class="btn-primary" onclick="saveExclSources()">Save</button>
       </div>
     </div>
   </div>

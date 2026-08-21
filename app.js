@@ -31,7 +31,8 @@ let filteredTickets = []
 let currentPage = 1
 const PAGE_SIZE = 50
 let sortField = 'date', sortAsc = false
-let searchText = '', filterStatus = '', filterSource = '', filterDateFrom = '', filterDateTo = '', filterDuplicates = false
+let searchText = '', filterStatus = '', filterSource = '', filterDateFrom = '', filterDateTo = '', filterDuplicates = false, filterExpiredAwaiting = false
+let excludedSources = new Set()
 let editingId = null
 let pipWindow = null
 let calYear = new Date().getFullYear()
@@ -46,6 +47,12 @@ window.addEventListener('DOMContentLoaded', () => {
   setupImportExport()
   document.getElementById('btn-overlay').addEventListener('click', openOverlay)
   document.getElementById('btn-add-ticket').addEventListener('click', openAdd)
+  document.getElementById('btn-excl-sources').addEventListener('click', openExclModal)
+  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    ;['btn-import','btn-clear-data','btn-merge-dupes','btn-expired-awaiting','btn-resolve-expired'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.style.display = 'none'
+    })
+  }
   document.getElementById('cal-prev').addEventListener('click', () => calNav(-1))
   document.getElementById('cal-next').addEventListener('click', () => calNav(1))
   document.getElementById('btn-clear-data').addEventListener('click', async () => {
@@ -65,6 +72,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ── Storage ───────────────────────────────────────────────────────────────
 function loadTickets() {
+  db.collection('umardesk_config').doc('stats_exclusions').get().then(doc => {
+    if (doc.exists) excludedSources = new Set(doc.data().excludedSources || [])
+  })
   db.collection(COL).onSnapshot(snapshot => {
     allTickets = snapshot.docs.map(d => d.data())
     refreshAll()
@@ -134,18 +144,23 @@ function renderDashboard() {
   document.getElementById('empty-dashboard').style.display = 'none'
   document.getElementById('dashboard-data').style.display = 'block'
 
+  const statsTickets = excludedSources.size
+    ? allTickets.filter(t => !excludedSources.has((t.source||'Unknown').trim()))
+    : allTickets
+  const statsTotal = statsTickets.length
+
   const counts = { Dispatched:0, Resolve:0, FCR:0, Awaiting:0, OSE:0, Defective:0, Other:0 }
   const sources = {}
-  allTickets.forEach(t => {
+  statsTickets.forEach(t => {
     const s = getStatus(t.comment)
     counts[s] = (counts[s]||0) + 1
     const src = (t.source||'Unknown').trim()
     sources[src] = (sources[src]||0) + 1
   })
-  const dates = new Set(allTickets.map(t => t.date).filter(Boolean))
-  const avg = dates.size ? (total/dates.size).toFixed(1) : '0'
+  const dates = new Set(statsTickets.map(t => t.date).filter(Boolean))
+  const avg = dates.size ? (statsTotal/dates.size).toFixed(1) : '0'
 
-  document.getElementById('stat-total').textContent      = total.toLocaleString()
+  document.getElementById('stat-total').textContent      = statsTotal.toLocaleString()
   document.getElementById('stat-dispatched').textContent = counts.Dispatched.toLocaleString()
   document.getElementById('stat-resolve').textContent    = counts.Resolve.toLocaleString()
   document.getElementById('stat-fcr').textContent        = counts.FCR.toLocaleString()
@@ -162,7 +177,7 @@ function renderDashboard() {
     `<div class="bar-row">
       <span class="bar-label">${escHtml(src)}</span>
       <div class="bar-track"><div class="bar-fill bar-blue" style="width:${(cnt/maxSrc*100).toFixed(1)}%"></div></div>
-      <span class="bar-count">${cnt.toLocaleString()} <span class="bar-pct">(${(cnt/total*100).toFixed(1)}%)</span></span>
+      <span class="bar-count">${cnt.toLocaleString()} <span class="bar-pct">(${(cnt/statsTotal*100).toFixed(1)}%)</span></span>
     </div>`).join('')
 
   const statusOrder = ['Dispatched','Resolve','FCR','Awaiting','OSE','Defective','Other']
@@ -171,7 +186,7 @@ function renderDashboard() {
     `<div class="bar-row">
       <span class="bar-label"><span class="badge badge-${getStatusClass(s)}">${s}</span></span>
       <div class="bar-track"><div class="bar-fill bar-${getStatusClass(s)}" style="width:${(counts[s]/maxStat*100).toFixed(1)}%"></div></div>
-      <span class="bar-count">${counts[s].toLocaleString()} <span class="bar-pct">(${(counts[s]/total*100).toFixed(1)}%)</span></span>
+      <span class="bar-count">${counts[s].toLocaleString()} <span class="bar-pct">(${(counts[s]/statsTotal*100).toFixed(1)}%)</span></span>
     </div>`).join('')
 
   renderCalendar()
@@ -243,6 +258,12 @@ function applyFilters() {
     if (filterDateFrom && t.date && t.date < filterDateFrom) return false
     if (filterDateTo   && t.date && t.date > filterDateTo)   return false
     if (dupSet && !dupSet.has(t.tickNumber)) return false
+    if (filterExpiredAwaiting) {
+      if (getStatus(t.comment) !== 'Awaiting') return false
+      const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-30)
+      const y=cutoff.getFullYear(),m=String(cutoff.getMonth()+1).padStart(2,'0'),d=String(cutoff.getDate()).padStart(2,'0')
+      if (!t.date || t.date > `${y}-${m}-${d}`) return false
+    }
     return true
   })
   filteredTickets.sort((a,b) => {
@@ -580,16 +601,86 @@ function setupFilters() {
   document.getElementById('filter-date-to').addEventListener('change',e=>{ filterDateTo=e.target.value; applyFilters(); renderTable() })
   document.getElementById('btn-clear-filters').addEventListener('click',()=>{
     searchText=filterStatus=filterSource=filterDateFrom=filterDateTo=''
-    filterDuplicates=false
+    filterDuplicates=false; filterExpiredAwaiting=false
     document.getElementById('btn-duplicates').classList.remove('active')
+    document.getElementById('btn-expired-awaiting').classList.remove('active')
+    document.getElementById('btn-resolve-expired').style.display='none'
     ;['search-input','filter-status','filter-source','filter-date-from','filter-date-to'].forEach(id=>{ document.getElementById(id).value='' })
     applyFilters(); renderTable()
+  })
+  document.getElementById('btn-expired-awaiting').addEventListener('click', () => {
+    filterExpiredAwaiting = !filterExpiredAwaiting
+    document.getElementById('btn-expired-awaiting').classList.toggle('active', filterExpiredAwaiting)
+    document.getElementById('btn-resolve-expired').style.display = filterExpiredAwaiting ? '' : 'none'
+    applyFilters(); renderTable()
+  })
+  document.getElementById('btn-resolve-expired').addEventListener('click', async () => {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-30)
+    const y=cutoff.getFullYear(),m=String(cutoff.getMonth()+1).padStart(2,'0'),d=String(cutoff.getDate()).padStart(2,'0')
+    const cutoffISO = `${y}-${m}-${d}`
+    const expired = allTickets.filter(t => getStatus(t.comment)==='Awaiting' && t.date && t.date <= cutoffISO)
+    if (!expired.length) { showToast('No expired awaiting tickets','info'); return }
+    if (!confirm(`Auto-resolve ${expired.length} expired Awaiting ticket${expired.length===1?'':'s'}? This sets them to Resolved.`)) return
+    const updated = expired.map(t => ({...t, comment:'resolved', misc:`Auto-resolved: awaiting >30 days`}))
+    const chunks = []
+    for (let i=0; i<updated.length; i+=400) chunks.push(updated.slice(i,i+400))
+    await Promise.all(chunks.map(chunk => {
+      const b = db.batch()
+      chunk.forEach(t => b.set(db.collection(COL).doc(t.id), t))
+      return b.commit()
+    }))
+    showToast(`Resolved ${expired.length} expired ticket${expired.length===1?'':'s'}`, 'success')
   })
   document.getElementById('btn-duplicates').addEventListener('click',()=>{
     filterDuplicates=!filterDuplicates
     document.getElementById('btn-duplicates').classList.toggle('active', filterDuplicates)
     applyFilters(); renderTable()
   })
+  document.getElementById('btn-merge-dupes').addEventListener('click', async () => {
+    const groups = {}
+    allTickets.forEach(t => {
+      const key = t.tickNumber.toLowerCase()
+      if (!groups[key]) groups[key] = []
+      groups[key].push(t)
+    })
+    const toDelete = []
+    Object.values(groups).forEach(group => {
+      if (group.length < 2) return
+      group.sort((a,b) => ((b.date||'') + ' ' + (b.time||'')).localeCompare((a.date||'') + ' ' + (a.time||'')))
+      toDelete.push(...group.slice(1))
+    })
+    if (!toDelete.length) { showToast('No duplicates found','info'); return }
+    if (!confirm(`Merge ${toDelete.length} duplicate entr${toDelete.length===1?'y':'ies'}? Keeps latest status for each ticket.`)) return
+    const chunks = []
+    for (let i=0; i<toDelete.length; i+=400) chunks.push(toDelete.slice(i,i+400))
+    await Promise.all(chunks.map(chunk => {
+      const b = db.batch()
+      chunk.forEach(t => b.delete(db.collection(COL).doc(t.id)))
+      return b.commit()
+    }))
+    showToast(`Merged — removed ${toDelete.length} duplicate${toDelete.length===1?'':'s'}`, 'success')
+  })
+}
+
+// ── Exclude Sources Modal ─────────────────────────────────────────────────
+function openExclModal() {
+  const allSources = [...new Set(allTickets.map(t=>(t.source||'Unknown').trim()))].sort()
+  document.getElementById('excl-source-list').innerHTML = allSources.map(src =>
+    `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px">
+      <input type="checkbox" value="${escHtml(src)}" ${excludedSources.has(src)?'checked':''} style="accent-color:var(--accent);width:14px;height:14px">
+      ${escHtml(src)}
+    </label>`
+  ).join('')
+  document.getElementById('excl-modal-overlay').classList.add('show')
+}
+function closeExclModal() { document.getElementById('excl-modal-overlay').classList.remove('show') }
+function saveExclSources() {
+  const checked = [...document.querySelectorAll('#excl-source-list input[type=checkbox]:checked')].map(el=>el.value)
+  excludedSources = new Set(checked)
+  db.collection('umardesk_config').doc('stats_exclusions').set({ excludedSources: checked })
+  renderDashboard()
+  closeExclModal()
+  showToast(`Stats filter saved — ${checked.length} source${checked.length===1?'':'s'} excluded`, 'success')
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────

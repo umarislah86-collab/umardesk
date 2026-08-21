@@ -231,7 +231,7 @@ document.getElementById('mode-search').addEventListener('click', () => setMode('
 
 function setMode(m) {
   mode = m
-  document.getElementById('log-panel').style.display    = m === 'log'    ? 'flex' : 'none'
+  document.getElementById('log-panel').style.display    = m === 'log'    ? 'block' : 'none'
   document.getElementById('search-panel').style.display = m === 'search' ? 'flex' : 'none'
   document.getElementById('mode-log').classList.toggle('active', m === 'log')
   document.getElementById('mode-search').classList.toggle('active', m === 'search')
