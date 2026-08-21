@@ -112,9 +112,17 @@ async function submitAction(key, action) {
 
   if (clips) {
     // Auto-mode: C3 = ticket#, C2 = subject, C1 = team
-    ticketNum = clips.c3 || document.getElementById('c3-input').value.trim()
-    subject   = clips.c2 || document.getElementById('c2-input').value.trim()
-    teamName  = clips.c1 || document.getElementById('c1-input').value.trim()
+    if (action.needsTeam) {
+      // Dispatch: 3 copies — C1=team, C2=subject, C3=ticket#
+      ticketNum = clips.c3 || document.getElementById('c3-input').value.trim()
+      subject   = clips.c2 || document.getElementById('c2-input').value.trim()
+      teamName  = clips.c1 || document.getElementById('c1-input').value.trim()
+    } else {
+      // Others: 2 copies — C1=subject, C2=ticket#
+      ticketNum = clips.c2 || document.getElementById('c3-input').value.trim()
+      subject   = clips.c1 || document.getElementById('c2-input').value.trim()
+      teamName  = document.getElementById('c1-input').value.trim()
+    }
 
     // Update preview display
     document.getElementById('prev-c3').textContent = clips.c3 || '—'
