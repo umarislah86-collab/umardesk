@@ -11,6 +11,33 @@
 </head>
 <body>
 
+  <!-- Password gate (GH Pages only) -->
+  <div id="pw-gate" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+    <span style="font-size:28px">⚡</span>
+    <h2 style="color:#e6edf3;font-family:system-ui;font-size:18px;font-weight:700;">UmarDesk</h2>
+    <input id="pw-input" type="password" placeholder="Password" autofocus
+      style="background:#21262d;border:1px solid #30363d;border-radius:8px;color:#e6edf3;padding:10px 16px;font-size:15px;width:240px;outline:none;text-align:center;">
+    <div id="pw-error" style="color:#f85149;font-family:system-ui;font-size:13px;display:none;">Wrong password</div>
+  </div>
+  <script>
+    (function() {
+      const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+      const gate = document.getElementById('pw-gate')
+      if (isLocal || sessionStorage.getItem('ud_auth') === '1') { gate.style.display = 'none'; return }
+      gate.style.display = 'flex'
+      document.getElementById('pw-input').addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return
+        if (this.value === 'Umar24434!') {
+          sessionStorage.setItem('ud_auth', '1')
+          gate.style.display = 'none'
+        } else {
+          document.getElementById('pw-error').style.display = 'block'
+          this.value = ''
+        }
+      })
+    })()
+  </script>
+
   <header class="app-header">
     <div class="header-left">
       <span class="logo">⚡</span>
