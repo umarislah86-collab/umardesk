@@ -462,7 +462,7 @@ function setupImportExport() {
             if(m1) ds=`${m1[3]}-${m1[1].padStart(2,'0')}-${m1[2].padStart(2,'0')}`
             else { const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})/); ds=m2?`${m2[1]}-${m2[2]}-${m2[3]}`:s }
           }
-          tickets.push({ id:`t_${n++}`, date:ds, time:'', tickNumber:tickVal,
+          tickets.push({ id:`imp_${Date.now()}_${n++}`, date:ds, time:'', tickNumber:tickVal,
             description: cDesc>=0?(row[cDesc]||'').toString().trim():(row[3]||'').toString().trim(),
             comment:     cCmt>=0 ?(row[cCmt]||'').toString().trim() :(row[4]||'').toString().trim(),
             source:      normalizeSource(cSrc>=0 ?(row[cSrc]||'').toString().trim() :(row[5]||'').toString().trim()),
