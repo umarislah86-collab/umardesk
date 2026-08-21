@@ -70,7 +70,7 @@ document.body.innerHTML = `
   </div>
 
   <!-- SEARCH MODE -->
-  <div id="search-panel" style="display:none">
+  <div id="search-panel" style="display:none;flex-direction:column;flex:1;min-height:0;">
     <div class="ov-field-row" style="padding:8px 10px 4px">
       <input id="search-input" class="ov-input" placeholder="🔍  Ticket #, subject, or team...">
     </div>
@@ -231,8 +231,8 @@ document.getElementById('mode-search').addEventListener('click', () => setMode('
 
 function setMode(m) {
   mode = m
-  document.getElementById('log-panel').style.display    = m === 'log'    ? 'block' : 'none'
-  document.getElementById('search-panel').style.display = m === 'search' ? 'block' : 'none'
+  document.getElementById('log-panel').style.display    = m === 'log'    ? 'flex' : 'none'
+  document.getElementById('search-panel').style.display = m === 'search' ? 'flex' : 'none'
   document.getElementById('mode-log').classList.toggle('active', m === 'log')
   document.getElementById('mode-search').classList.toggle('active', m === 'search')
   if (m === 'search') document.getElementById('search-input').focus()
@@ -250,7 +250,7 @@ function renderSearchResults(results) {
   el.innerHTML = results.map(t => {
     const st = bridge.getStatus(t.comment)
     return `<div class="ov-result-row">
-      <div class="ov-result-tick">${esc(t.tickNumber)}</div>
+      <div class="ov-result-tick"><a href="https://itsm.services.sap/incident.do?sysparm_query=number=${esc(t.tickNumber)}" target="_blank" class="ov-tick-link">${esc(t.tickNumber)}</a></div>
       <div class="ov-result-desc" title="${esc(t.description)}">${esc(trunc(t.description, 44))}</div>
       <div class="ov-result-meta">
         <span class="ov-badge ov-badge-${scMap[st]||'other'}">${st}</span>

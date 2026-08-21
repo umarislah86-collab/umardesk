@@ -193,7 +193,9 @@ body {
 .ov-updated { background: rgba(88,166,255,.15); color: var(--accent); }
 
 /* ── Search ────────────────────────────────────────────────────────────── */
-.ov-search-results { overflow-y: auto; flex: 1; padding: 0 10px 8px; }
+.ov-search-results { overflow-y: auto; flex: 1; min-height: 0; padding: 0 10px 8px; }
+.ov-tick-link { color: var(--accent); text-decoration: none; }
+.ov-tick-link:hover { text-decoration: underline; }
 .ov-result-row {
   padding: 7px 6px;
   border-bottom: 1px solid var(--border);

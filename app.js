@@ -543,11 +543,12 @@ async function openOverlay() {
       }
     }
     pipWindow.document.title = 'UmarDesk'
+    const cb = Date.now()
     const css=pipWindow.document.createElement('link')
-    css.rel='stylesheet'; css.href='/overlay.css'
+    css.rel='stylesheet'; css.href=`/overlay.css?v=${cb}`
     pipWindow.document.head.appendChild(css)
     const sc=pipWindow.document.createElement('script')
-    sc.src='/overlay.js'
+    sc.src=`/overlay.js?v=${cb}`
     pipWindow.document.head.appendChild(sc)
     document.getElementById('btn-overlay').textContent='⬆ Overlay ●'
     pipWindow.addEventListener('pagehide', ()=>{ pipWindow=null; document.getElementById('btn-overlay').textContent='⬆ Overlay' })
