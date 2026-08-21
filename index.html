@@ -145,17 +145,22 @@
       <input type="date" id="filter-date-from" class="date-input" title="From date">
       <span class="date-sep">→</span>
       <input type="date" id="filter-date-to" class="date-input" title="To date">
-      <select id="filter-status" class="filter-select">
-        <option value="">All Status</option>
-        <option value="Resolve">Resolve</option>
-        <option value="Dispatched">Dispatched</option>
-        <option value="FCR">FCR</option>
-        <option value="Awaiting">Awaiting</option>
-        <option value="Other">Other</option>
-      </select>
-      <select id="filter-source" class="filter-select">
-        <option value="">All Sources</option>
-      </select>
+      <div class="multi-select-wrap" id="status-filter-wrap">
+        <button class="filter-select multi-select-btn" id="status-filter-btn">All Status ▾</button>
+        <div class="multi-select-dropdown" id="status-filter-dropdown">
+          <label><input type="checkbox" value="Resolve"> Resolve</label>
+          <label><input type="checkbox" value="Dispatched"> Dispatched</label>
+          <label><input type="checkbox" value="FCR"> FCR</label>
+          <label><input type="checkbox" value="Awaiting"> Awaiting</label>
+          <label><input type="checkbox" value="Further Support"> Further Support</label>
+          <label><input type="checkbox" value="Defective"> Defective</label>
+          <label><input type="checkbox" value="Other"> Other</label>
+        </div>
+      </div>
+      <div class="multi-select-wrap" id="source-filter-wrap">
+        <button class="filter-select multi-select-btn" id="source-filter-btn">All Sources ▾</button>
+        <div class="multi-select-dropdown" id="source-filter-dropdown"></div>
+      </div>
       <button id="btn-clear-filters" class="btn-secondary">↺ Clear</button>
       <button id="btn-duplicates" class="btn-secondary">⚠ Duplicates</button>
       <button id="btn-merge-dupes" class="btn-secondary">⚡ Merge Dupes</button>

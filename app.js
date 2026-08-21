@@ -31,7 +31,7 @@ let filteredTickets = []
 let currentPage = 1
 const PAGE_SIZE = 50
 let sortField = 'date', sortAsc = false
-let searchText = '', filterStatus = '', filterSource = '', filterDateFrom = '', filterDateTo = '', filterDuplicates = false, filterExpiredAwaiting = false
+let searchText = '', filterStatus = new Set(), filterSource = new Set(), filterDateFrom = '', filterDateTo = '', filterDuplicates = false, filterExpiredAwaiting = false
 let excludedSources = new Set()
 let editingId = null
 let pipWindow = null
@@ -253,8 +253,8 @@ function applyFilters() {
       const q = searchText.toLowerCase()
       if (![t.tickNumber,t.description,t.comment,t.source,t.misc].some(f=>(f||'').toLowerCase().includes(q))) return false
     }
-    if (filterStatus && getStatus(t.comment) !== filterStatus) return false
-    if (filterSource && !(t.source||'').toLowerCase().includes(filterSource.toLowerCase())) return false
+    if (filterStatus.size && !filterStatus.has(getStatus(t.comment))) return false
+    if (filterSource.size && !filterSource.has((t.source||'').trim())) return false
     if (filterDateFrom && t.date && t.date < filterDateFrom) return false
     if (filterDateTo   && t.date && t.date > filterDateTo)   return false
     if (dupSet && !dupSet.has(t.tickNumber)) return false
@@ -287,9 +287,19 @@ function applyFilters() {
 
 function populateSourceFilter() {
   const sources = [...new Set(allTickets.map(t=>t.source).filter(Boolean).map(s=>s.trim()))].sort()
-  const sel = document.getElementById('filter-source'), cur = sel.value
-  sel.innerHTML = '<option value="">All Sources</option>' +
-    sources.map(s=>`<option value="${escHtml(s)}"${s===cur?' selected':''}>${escHtml(s)}</option>`).join('')
+  const drop = document.getElementById('source-filter-dropdown')
+  drop.innerHTML = sources.map(s =>
+    `<label><input type="checkbox" value="${escHtml(s)}" ${filterSource.has(s)?'checked':''}> ${escHtml(s)}</label>`
+  ).join('')
+  drop.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      filterSource = new Set([...drop.querySelectorAll('input:checked')].map(c=>c.value))
+      const count = filterSource.size
+      document.getElementById('source-filter-btn').textContent = count === 0 ? 'All Sources ▾' : `${count} Source${count>1?'s':''} ▾`
+      document.getElementById('source-filter-btn').classList.toggle('active', count > 0)
+      applyFilters(); renderTable()
+    })
+  })
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────
@@ -598,17 +608,42 @@ function setupModal() {
 
 function setupFilters() {
   document.getElementById('search-input').addEventListener('input',e=>{ searchText=e.target.value; applyFilters(); renderTable() })
-  document.getElementById('filter-status').addEventListener('change',e=>{ filterStatus=e.target.value; applyFilters(); renderTable() })
-  document.getElementById('filter-source').addEventListener('change',e=>{ filterSource=e.target.value; applyFilters(); renderTable() })
   document.getElementById('filter-date-from').addEventListener('change',e=>{ filterDateFrom=e.target.value; applyFilters(); renderTable() })
   document.getElementById('filter-date-to').addEventListener('change',e=>{ filterDateTo=e.target.value; applyFilters(); renderTable() })
+
+  // Multi-select status dropdown
+  const statusBtn = document.getElementById('status-filter-btn')
+  const statusDrop = document.getElementById('status-filter-dropdown')
+  statusBtn.addEventListener('click', e => { e.stopPropagation(); statusDrop.classList.toggle('open'); document.getElementById('source-filter-dropdown').classList.remove('open') })
+  statusDrop.addEventListener('click', e => e.stopPropagation())
+  statusDrop.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      filterStatus = new Set([...statusDrop.querySelectorAll('input:checked')].map(c=>c.value))
+      const count = filterStatus.size
+      statusBtn.textContent = count === 0 ? 'All Status ▾' : `${count} Status ▾`
+      statusBtn.classList.toggle('active', count > 0)
+      applyFilters(); renderTable()
+    })
+  })
+
+  // Multi-select source dropdown
+  const sourceBtn = document.getElementById('source-filter-btn')
+  const sourceDrop = document.getElementById('source-filter-dropdown')
+  sourceBtn.addEventListener('click', e => { e.stopPropagation(); sourceDrop.classList.toggle('open'); statusDrop.classList.remove('open') })
+  sourceDrop.addEventListener('click', e => e.stopPropagation())
+  document.addEventListener('click', () => { statusDrop.classList.remove('open'); sourceDrop.classList.remove('open') })
   document.getElementById('btn-clear-filters').addEventListener('click',()=>{
-    searchText=filterStatus=filterSource=filterDateFrom=filterDateTo=''
-    filterDuplicates=false; filterExpiredAwaiting=false
+    searchText=filterDateFrom=filterDateTo=''
+    filterStatus=new Set(); filterSource=new Set(); filterDuplicates=false; filterExpiredAwaiting=false
     document.getElementById('btn-duplicates').classList.remove('active')
     document.getElementById('btn-expired-awaiting').classList.remove('active')
     document.getElementById('btn-resolve-expired').style.display='none'
-    ;['search-input','filter-status','filter-source','filter-date-from','filter-date-to'].forEach(id=>{ document.getElementById(id).value='' })
+    document.getElementById('status-filter-btn').textContent='All Status ▾'
+    document.getElementById('status-filter-btn').classList.remove('active')
+    document.getElementById('source-filter-btn').textContent='All Sources ▾'
+    document.getElementById('source-filter-btn').classList.remove('active')
+    document.querySelectorAll('#status-filter-dropdown input, #source-filter-dropdown input').forEach(cb=>cb.checked=false)
+    ;['search-input','filter-date-from','filter-date-to'].forEach(id=>{ document.getElementById(id).value='' })
     applyFilters(); renderTable()
   })
   document.getElementById('btn-expired-awaiting').addEventListener('click', () => {

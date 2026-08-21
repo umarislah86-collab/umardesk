@@ -256,6 +256,23 @@ body {
 .comment-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
 .tr-alt-day { background: #1a2030; }
 .tr-alt-day:hover { background: #1e2535 !important; }
+
+/* ── Multi-select dropdown ─────────────────────────────────────────────── */
+.multi-select-wrap { position: relative; }
+.multi-select-btn { cursor: pointer; text-align: left; min-width: 120px; }
+.multi-select-btn.active { border-color: var(--accent); color: var(--accent); }
+.multi-select-dropdown {
+  display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 100;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 0; min-width: 160px; box-shadow: 0 6px 20px rgba(0,0,0,.4);
+}
+.multi-select-dropdown.open { display: block; }
+.multi-select-dropdown label {
+  display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+  cursor: pointer; font-size: 12px; color: var(--text);
+}
+.multi-select-dropdown label:hover { background: var(--border); }
+.multi-select-dropdown input[type=checkbox] { accent-color: var(--accent); width: 13px; height: 13px; }
 .update-tag  { font-size: 10px; color: var(--accent); margin-top: 2px; opacity: .8; }
 
 /* ── Badges ────────────────────────────────────────────────────────────── */
