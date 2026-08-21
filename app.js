@@ -502,13 +502,18 @@ function setupImportExport() {
     reader.readAsArrayBuffer(file)
   })
   document.getElementById('btn-export').addEventListener('click', () => {
-    if(!allTickets.length) { showToast('No tickets to export','error'); return }
+    const toExport = filteredTickets.length ? filteredTickets : allTickets
+    if(!toExport.length) { showToast('No tickets to export','error'); return }
     const rows=[['','Date','Tick Number','Description','Additional Comment','Source','Total per day','Misc']]
-    allTickets.forEach(t=>rows.push(['',t.date,t.tickNumber,t.description,t.comment,t.source,t.totalPerDay,t.misc]))
+    toExport.forEach(t=>rows.push(['',t.date,t.tickNumber,t.description,t.comment,t.source,t.totalPerDay,t.misc]))
+    const fmt = d => { if(!d) return ''; const m=d.match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}${m[2]}${m[1].slice(2)}`:'' }
+    const dates = toExport.map(t=>t.date).filter(Boolean).sort()
+    const from = fmt(dates[0]), to = fmt(dates[dates.length-1])
+    const filename = from && to ? `UmardeskTicketsExport_${from}_${to}.xlsx` : 'UmardeskTicketsExport.xlsx'
     const wb=XLSX.utils.book_new(), ws=XLSX.utils.aoa_to_sheet(rows)
     ws['!cols']=[{wch:3},{wch:12},{wch:16},{wch:50},{wch:30},{wch:20},{wch:14},{wch:20}]
     XLSX.utils.book_append_sheet(wb,ws,'Tickets')
-    XLSX.writeFile(wb,'tickets_export.xlsx')
+    XLSX.writeFile(wb,filename)
     showToast('Exported successfully','success')
   })
 }
