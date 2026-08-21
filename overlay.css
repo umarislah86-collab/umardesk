@@ -1,0 +1,236 @@
+:root {
+  --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+  --border: #30363d; --text: #e6edf3; --text2: #8b949e;
+  --accent: #58a6ff; --resolve: #3fb950; --dispatched: #f85149;
+  --fcr: #58a6ff; --awaiting: #f0883e; --other: #8b949e;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.ov-app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+.ov-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.ov-logo { font-size: 15px; }
+.ov-title { font-size: 13px; font-weight: 600; flex: 1; }
+.ov-mode-btns { display: flex; gap: 4px; }
+.ov-mode-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text2);
+  padding: 3px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .1s;
+}
+.ov-mode-btn.active { background: var(--bg3); color: var(--text); border-color: var(--accent); }
+.ov-mode-btn:hover:not(.active) { background: var(--bg3); }
+
+/* ── Header right ──────────────────────────────────────────────────────── */
+.ov-header-right { display: flex; align-items: center; gap: 6px; }
+
+/* ── Helper status dot ─────────────────────────────────────────────────── */
+.helper-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background .3s;
+}
+.helper-dot.connected    { background: var(--resolve); box-shadow: 0 0 4px rgba(63,185,80,.5); }
+.helper-dot.disconnected { background: var(--dispatched); }
+
+/* ── Helper banner ─────────────────────────────────────────────────────── */
+.helper-banner {
+  margin: 6px 10px 2px;
+  padding: 6px 9px;
+  background: rgba(248,81,73,.1);
+  border: 1px solid rgba(248,81,73,.3);
+  border-radius: 5px;
+  font-size: 11px;
+  color: #f85149;
+  line-height: 1.5;
+}
+
+/* ── Clipboard preview ─────────────────────────────────────────────────── */
+.ov-preview {
+  margin: 6px 10px 2px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.clip-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.clip-tag {
+  font-size: 10px; font-weight: 700; font-family: monospace;
+  color: var(--accent); background: rgba(88,166,255,.1);
+  padding: 1px 5px; border-radius: 3px;
+  flex-shrink: 0;
+}
+.clip-val {
+  font-size: 11px; color: var(--text2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Manual override (details) ─────────────────────────────────────────── */
+.ov-manual {
+  margin: 4px 10px 0;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg2);
+}
+.ov-manual summary {
+  cursor: pointer;
+  padding: 5px 9px;
+  font-size: 11px;
+  color: var(--text2);
+  user-select: none;
+  list-style: none;
+}
+.ov-manual summary:hover { color: var(--text); }
+.ov-manual[open] summary { border-bottom: 1px solid var(--border); }
+.ov-manual .ov-fields { padding: 6px 8px; }
+
+/* ── Fields ────────────────────────────────────────────────────────────── */
+.ov-fields { padding: 8px 10px 4px; display: flex; flex-direction: column; gap: 6px; }
+.ov-field-row { display: flex; align-items: center; gap: 5px; }
+.ov-input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  padding: 6px 8px;
+  font-size: 12px;
+  outline: none;
+  font-family: inherit;
+  min-width: 0;
+}
+.ov-input:focus { border-color: var(--accent); }
+.ov-input::placeholder { color: var(--text2); font-size: 11px; }
+.ov-clip-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text2);
+  padding: 5px 7px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .1s;
+}
+.ov-clip-btn:hover { background: #2d333b; color: var(--text); }
+.ov-clip-btn:active { transform: scale(.95); }
+
+/* ── Status bar ────────────────────────────────────────────────────────── */
+.ov-status-bar {
+  margin: 3px 10px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  min-height: 26px;
+  transition: background .2s;
+}
+.ov-bar-new { background: rgba(63,185,80,.12); }
+.ov-bar-existing { background: rgba(240,136,62,.12); color: var(--awaiting); }
+.ov-st-new { color: var(--resolve); }
+
+/* ── Action buttons ────────────────────────────────────────────────────── */
+.ov-actions {
+  padding: 4px 10px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+}
+.ov-action-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  border-radius: 5px;
+  color: var(--text);
+  padding: 9px 11px;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .1s, filter .1s;
+  font-family: inherit;
+  width: 100%;
+}
+.ov-action-btn:hover { background: #2d333b; filter: brightness(1.08); }
+.ov-action-btn:active { transform: scale(.985); }
+
+/* ── Result ────────────────────────────────────────────────────────────── */
+.ov-result {
+  margin: 3px 10px 6px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  min-height: 24px;
+}
+.ov-logged  { background: rgba(63,185,80,.15); color: var(--resolve); }
+.ov-updated { background: rgba(88,166,255,.15); color: var(--accent); }
+
+/* ── Search ────────────────────────────────────────────────────────────── */
+.ov-search-results { overflow-y: auto; flex: 1; padding: 0 10px 8px; }
+.ov-result-row {
+  padding: 7px 6px;
+  border-bottom: 1px solid var(--border);
+  cursor: default;
+}
+.ov-result-row:hover { background: var(--bg3); border-radius: 4px; }
+.ov-result-tick { font-family: monospace; font-size: 11px; color: var(--accent); font-weight: 600; }
+.ov-result-desc { font-size: 11px; color: var(--text2); margin: 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ov-result-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap; }
+.ov-date { font-size: 10px; color: var(--text2); }
+.ov-src  { font-size: 10px; color: var(--text2); opacity: .7; }
+.ov-no-results { padding: 20px; text-align: center; color: var(--text2); font-size: 12px; }
+
+/* ── Badges ────────────────────────────────────────────────────────────── */
+.ov-badge { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 10px; font-weight: 700; }
+.ov-badge-resolve    { background: rgba(63,185,80,.15);   color: var(--resolve); }
+.ov-badge-dispatched { background: rgba(248,81,73,.15);   color: var(--dispatched); }
+.ov-badge-fcr        { background: rgba(88,166,255,.15);  color: var(--fcr); }
+.ov-badge-awaiting   { background: rgba(240,136,62,.15);  color: var(--awaiting); }
+.ov-badge-ose        { background: rgba(156,136,255,.15); color: #9c88ff; }
+.ov-badge-defective  { background: rgba(248,81,73,.15);   color: var(--dispatched); }
+.ov-badge-other      { background: rgba(139,148,158,.15); color: var(--other); }
+
+/* ── Toast ─────────────────────────────────────────────────────────────── */
+.ov-toast {
+  position: fixed; bottom: 8px; left: 10px; right: 10px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px 10px; font-size: 11px; color: var(--text);
+  opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .2s;
+  z-index: 100;
+}
+.ov-toast.show { opacity: 1; transform: translateY(0); }
+.ov-toast-warn { border-left: 3px solid var(--awaiting); }
+.ov-toast-info { border-left: 3px solid var(--accent); }
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text2); }

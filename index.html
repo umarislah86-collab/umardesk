@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UmarDesk — IT Command Center</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-left">
+      <span class="logo">⚡</span>
+      <h1>UmarDesk</h1>
+      <span class="app-subtitle">IT Command Center</span>
+    </div>
+    <div class="header-right">
+      <button id="btn-overlay" class="btn-overlay" title="Open always-on-top overlay">⬆ Overlay</button>
+      <button id="btn-import" class="btn-outline">⬆ Import Excel</button>
+      <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none">
+      <button id="btn-export" class="btn-outline">⬇ Export Excel</button>
+      <button id="btn-clear-data" class="btn-outline btn-danger-outline" title="Delete all ticket data">🗑 Clear Data</button>
+    </div>
+  </header>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="dashboard-section">Dashboard</button>
+    <button class="tab-btn" data-tab="tickets-section">
+      Tickets <span id="tickets-tab-count" class="tab-badge">0</span>
+    </button>
+  </nav>
+
+  <!-- Dashboard -->
+  <section id="dashboard-section" class="tab-section active">
+    <div class="dashboard-content">
+
+      <div id="empty-dashboard" class="empty-state" style="display:none">
+        <div class="empty-icon">📂</div>
+        <p>No tickets yet. Import your Excel file to get started.</p>
+        <button class="btn-primary" onclick="document.getElementById('btn-import').click()">Import Excel</button>
+      </div>
+
+      <div id="dashboard-data">
+        <div class="stat-grid">
+          <div class="stat-card card-total">
+            <div class="stat-label">Total Tickets</div>
+            <div class="stat-value" id="stat-total">0</div>
+          </div>
+          <div class="stat-card card-dispatched">
+            <div class="stat-label">Dispatched</div>
+            <div class="stat-value" id="stat-dispatched">0</div>
+          </div>
+          <div class="stat-card card-resolve">
+            <div class="stat-label">Resolved</div>
+            <div class="stat-value" id="stat-resolve">0</div>
+          </div>
+          <div class="stat-card card-fcr">
+            <div class="stat-label">FCR</div>
+            <div class="stat-value" id="stat-fcr">0</div>
+          </div>
+          <div class="stat-card card-awaiting">
+            <div class="stat-label">Awaiting</div>
+            <div class="stat-value" id="stat-awaiting">0</div>
+          </div>
+          <div class="stat-card card-other">
+            <div class="stat-label">Other</div>
+            <div class="stat-value" id="stat-other">0</div>
+          </div>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-card">
+            <span class="metric-label">Avg tickets / working day</span>
+            <span class="metric-value" id="stat-avg">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Working days logged</span>
+            <span class="metric-value" id="stat-days">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Unique sources</span>
+            <span class="metric-value" id="stat-sources">0</span>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="chart-card">
+            <h2>Source Breakdown</h2>
+            <div id="source-list"></div>
+          </div>
+          <div class="chart-card">
+            <h2>Status Breakdown</h2>
+            <div id="status-chart"></div>
+          </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="cal-section">
+          <div class="cal-header">
+            <button id="cal-prev" class="cal-nav-btn">‹</button>
+            <span id="cal-title" class="cal-title"></span>
+            <button id="cal-next" class="cal-nav-btn">›</button>
+          </div>
+          <div id="cal-grid" class="cal-grid"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tickets -->
+  <section id="tickets-section" class="tab-section">
+    <div class="toolbar">
+      <input type="text" id="search-input" placeholder="🔍  Ticket # or description or team..." class="search-input">
+      <input type="date" id="filter-date-from" class="date-input" title="From date">
+      <span class="date-sep">→</span>
+      <input type="date" id="filter-date-to" class="date-input" title="To date">
+      <select id="filter-status" class="filter-select">
+        <option value="">All Status</option>
+        <option value="Resolve">Resolve</option>
+        <option value="Dispatched">Dispatched</option>
+        <option value="FCR">FCR</option>
+        <option value="Awaiting">Awaiting</option>
+        <option value="Other">Other</option>
+      </select>
+      <select id="filter-source" class="filter-select">
+        <option value="">All Sources</option>
+      </select>
+      <button id="btn-clear-filters" class="btn-secondary">↺ Clear</button>
+      <button id="btn-duplicates" class="btn-secondary">⚠ Duplicates</button>
+      <button id="btn-add-ticket" class="btn-primary">+ Add Ticket</button>
+    </div>
+    <div class="table-meta">
+      <span id="filter-count">0 tickets</span>
+    </div>
+    <div class="table-wrap">
+      <table class="ticket-table">
+        <thead>
+          <tr>
+            <th data-sort="date" onclick="sortBy('date')">Date <span class="sort-arrow">↕</span></th>
+            <th data-sort="tickNumber" onclick="sortBy('tickNumber')">Ticket # <span class="sort-arrow">↕</span></th>
+            <th data-sort="description" onclick="sortBy('description')">Subject <span class="sort-arrow">↕</span></th>
+            <th data-sort="comment" onclick="sortBy('comment')">Status / Action <span class="sort-arrow">↕</span></th>
+            <th data-sort="source" onclick="sortBy('source')">Source <span class="sort-arrow">↕</span></th>
+            <th class="th-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="ticket-tbody"></tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <span id="showing-text"></span>
+      <div id="pagination"></div>
+    </div>
+  </section>
+
+  <!-- Add/Edit Modal -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Add Ticket</h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date *</label>
+            <input type="date" id="field-date">
+          </div>
+          <div class="form-group form-group-time">
+            <label>Time</label>
+            <input type="time" id="field-time">
+          </div>
+          <div class="form-group">
+            <label>Ticket Number *</label>
+            <input type="text" id="field-ticknumber" placeholder="INC12345678">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Subject / Description</label>
+          <textarea id="field-description" rows="2" placeholder="Issue description"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Action / Comment</label>
+          <textarea id="field-comment" rows="2" placeholder="resolved / awaiting info / dispatched to..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Source</label>
+            <input type="text" id="field-source" placeholder="Self service / Expert Q / Phone">
+          </div>
+          <div class="form-group">
+            <label>Total per Day</label>
+            <input type="text" id="field-totalperday" placeholder="Total: 5">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Misc</label>
+          <input type="text" id="field-misc" placeholder="Notes">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-cancel-ticket" class="btn-secondary">Cancel</button>
+        <button id="btn-save-ticket" class="btn-primary">Save Ticket</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
