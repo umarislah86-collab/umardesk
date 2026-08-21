@@ -254,6 +254,8 @@ body {
 .td-total { color: var(--text2); font-size: 12px; white-space: nowrap; }
 .td-actions { white-space: nowrap; }
 .comment-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.tr-alt-day { background: #1a2030; }
+.tr-alt-day:hover { background: #1e2535 !important; }
 .update-tag  { font-size: 10px; color: var(--accent); margin-top: 2px; opacity: .8; }
 
 /* ── Badges ────────────────────────────────────────────────────────────── */

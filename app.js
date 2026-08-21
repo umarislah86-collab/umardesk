@@ -272,11 +272,14 @@ function populateSourceFilter() {
 function renderTable() {
   const start = (currentPage-1)*PAGE_SIZE
   const items = filteredTickets.slice(start, start+PAGE_SIZE)
+  let lastDate = null, dayIndex = -1
   document.getElementById('ticket-tbody').innerHTML = items.map(t => {
     const st = getStatus(t.comment), sc = getStatusClass(st)
     const updateTag = t.misc && t.misc.startsWith('Updated')
       ? `<div class="update-tag">↻ ${escHtml(t.misc)}</div>` : ''
-    return `<tr>
+    if (t.date !== lastDate) { lastDate = t.date; dayIndex++ }
+    const rowClass = dayIndex % 2 === 0 ? '' : ' class="tr-alt-day"'
+    return `<tr${rowClass}>
       <td class="td-date">${formatDate(t.date)}${t.time?`<div class="td-time">${escHtml(t.time)}</div>`:''}</td>
       <td class="td-tick"><a href="https://itsm.services.sap/incident.do?sysparm_query=number=${escHtml(t.tickNumber)}" target="_blank" class="tick-link">${escHtml(t.tickNumber)}</a></td>
       <td class="td-desc" title="${escHtml(t.description)}">${escHtml(truncate(t.description,60))}${t.misc&&!t.misc.startsWith('Updated')?`<div class="comment-sub">📝 ${escHtml(truncate(t.misc,50))}</div>`:''}</td>
