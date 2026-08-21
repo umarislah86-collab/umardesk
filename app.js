@@ -108,7 +108,7 @@ function getStatus(comment) {
   const c = comment.toLowerCase()
   if (c.includes('fcr')) return 'FCR'
   if (c.includes('resolve')) return 'Resolve'
-  if (c.includes('ose') || c.includes('further support')) return 'OSE'
+  if (c.includes('ose') || c.includes('further support')) return 'Further Support'
   if (c.includes('defective')) return 'Defective'
   if (c.includes('dispatch') || c.includes('onsite')) return 'Dispatched'
   if (c.includes('await')) return 'Awaiting'
@@ -116,7 +116,7 @@ function getStatus(comment) {
 }
 
 function getStatusClass(s) {
-  return { Resolve:'resolve', Dispatched:'dispatched', FCR:'fcr', Awaiting:'awaiting', OSE:'ose', Defective:'defective', Other:'other' }[s] || 'other'
+  return { Resolve:'resolve', Dispatched:'dispatched', FCR:'fcr', Awaiting:'awaiting', 'Further Support':'ose', Defective:'defective', Other:'other' }[s] || 'other'
 }
 
 function normalizeSource(s) {
@@ -149,7 +149,7 @@ function renderDashboard() {
     : allTickets
   const statsTotal = statsTickets.length
 
-  const counts = { Dispatched:0, Resolve:0, FCR:0, Awaiting:0, OSE:0, Defective:0, Other:0 }
+  const counts = { Dispatched:0, Resolve:0, FCR:0, Awaiting:0, 'Further Support':0, Defective:0, Other:0 }
   const sources = {}
   statsTickets.forEach(t => {
     const s = getStatus(t.comment)
@@ -180,7 +180,7 @@ function renderDashboard() {
       <span class="bar-count">${cnt.toLocaleString()} <span class="bar-pct">(${(cnt/statsTotal*100).toFixed(1)}%)</span></span>
     </div>`).join('')
 
-  const statusOrder = ['Dispatched','Resolve','FCR','Awaiting','OSE','Defective','Other']
+  const statusOrder = ['Dispatched','Resolve','FCR','Awaiting','Further Support','Defective','Other']
   const maxStat = Math.max(...statusOrder.map(s=>counts[s])) || 1
   document.getElementById('status-chart').innerHTML = statusOrder.map(s =>
     `<div class="bar-row">
@@ -278,8 +278,11 @@ function applyFilters() {
     return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va)
   })
   currentPage = 1
-  document.getElementById('filter-count').textContent =
-    `${filteredTickets.length.toLocaleString()} ticket${filteredTickets.length !== 1 ? 's' : ''}`
+  const refCount = excludedSources.size ? filteredTickets.filter(t => excludedSources.has((t.source||'Unknown').trim())).length : 0
+  const myCount = filteredTickets.length - refCount
+  document.getElementById('filter-count').textContent = refCount > 0
+    ? `${myCount.toLocaleString()} my tickets · ${refCount.toLocaleString()} reference`
+    : `${filteredTickets.length.toLocaleString()} ticket${filteredTickets.length !== 1 ? 's' : ''}`
 }
 
 function populateSourceFilter() {
