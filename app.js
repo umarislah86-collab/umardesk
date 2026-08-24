@@ -432,11 +432,14 @@ function handleOverlaySubmit(ticketNum, subject, actionKey, teamName) {
 
   const existing = allTickets.find(t => t.tickNumber.toLowerCase()===ticketNum.toLowerCase())
   if (existing) {
-    const existSt=getStatus(existing.comment), newSt=getStatus(comment)
-    if (existSt===newSt) return { success:false, isDuplicate:true, sameStatus:true, existing }
-    const updated={ ...existing, comment, source, misc:`Updated ${todayISO()}: ${existSt} → ${newSt}` }
-    dbSet(updated)
-    return { success:true, isUpdate:true, ticket:updated }
+    const isRef = excludedSources.has((existing.source||'Unknown').trim())
+    if (!isRef) {
+      const existSt=getStatus(existing.comment), newSt=getStatus(comment)
+      if (existSt===newSt) return { success:false, isDuplicate:true, sameStatus:true, existing }
+      const updated={ ...existing, comment, source, misc:`Updated ${todayISO()}: ${existSt} → ${newSt}` }
+      dbSet(updated)
+      return { success:true, isUpdate:true, ticket:updated }
+    }
   }
 
   const ticket = {
@@ -567,6 +570,7 @@ async function openOverlay() {
       getAllTickets: ()=>allTickets,
       getActions:   ()=>ACTIONS,
       getStatus,
+      getExcludedSources: ()=>excludedSources,
       submit: handleOverlaySubmit,
       search: q => {
         if(!q) return []

@@ -144,11 +144,15 @@ async function submitAction(key, action) {
   // Duplicate check feedback before submit
   const existing = bridge.getAllTickets().find(t => t.tickNumber.toLowerCase() === ticketNum.toLowerCase())
   if (existing) {
-    const existSt = bridge.getStatus(existing.comment)
-    const newSt = bridge.getStatus(action.needsTeam ? `dispatched to ${teamName}` : action.comment)
-    if (existSt === newSt) {
-      toast(`Already logged as "${existSt}" on ${fmtDate(existing.date)}`, 'warn')
-      return
+    const excluded = bridge.getExcludedSources()
+    const isRef = excluded && excluded.has((existing.source||'Unknown').trim())
+    if (!isRef) {
+      const existSt = bridge.getStatus(existing.comment)
+      const newSt = bridge.getStatus(action.needsTeam ? `dispatched to ${teamName}` : action.comment)
+      if (existSt === newSt) {
+        toast(`Already logged as "${existSt}" on ${fmtDate(existing.date)}`, 'warn')
+        return
+      }
     }
   }
 
