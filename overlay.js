@@ -149,7 +149,8 @@ async function submitAction(key, action) {
     if (!isRef) {
       const existSt = bridge.getStatus(existing.comment)
       const newSt = bridge.getStatus(action.needsTeam ? `dispatched to ${teamName}` : action.comment)
-      if (existSt === newSt) {
+      const sameComment = existing.comment.toLowerCase() === (action.needsTeam ? `dispatched to ${teamName} - expert q` : action.comment).toLowerCase()
+      if (existSt === newSt && sameComment) {
         toast(`Already logged as "${existSt}" on ${fmtDate(existing.date)}`, 'warn')
         return
       }
