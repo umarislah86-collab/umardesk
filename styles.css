@@ -336,6 +336,12 @@ body {
   flex-shrink: 0; font-size: 12px; color: var(--text2);
   max-width: 1440px; margin-left: auto; margin-right: auto; width: 100%; box-sizing: border-box;
 }
+.per-page-wrap { display: flex; align-items: center; gap: 6px; }
+.per-page-select {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text); padding: 3px 7px; font-size: 12px; outline: none; cursor: pointer; color-scheme: dark;
+}
+.per-page-select:focus { border-color: var(--accent); }
 #pagination { display: flex; align-items: center; gap: 3px; }
 #pagination button { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: 4px; padding: 4px 9px; font-size: 12px; cursor: pointer; min-width: 30px; transition: background .1s; }
 #pagination button:hover:not(:disabled) { background: var(--border); color: var(--text); }

@@ -29,7 +29,7 @@ const ACTIONS = {
 let allTickets = []
 let filteredTickets = []
 let currentPage = 1
-const PAGE_SIZE = 50
+let pageSize = 50
 let sortField = 'date', sortAsc = false
 let searchText = '', filterStatus = new Set(), filterSource = new Set(), filterTeam = new Set(), filterDateFrom = '', filterDateTo = '', filterDuplicates = false, filterExpiredAwaiting = false
 let excludedSources = new Set()
@@ -364,8 +364,8 @@ function populateTeamFilter() {
 
 // ── Table ─────────────────────────────────────────────────────────────────
 function renderTable() {
-  const start = (currentPage-1)*PAGE_SIZE
-  const items = filteredTickets.slice(start, start+PAGE_SIZE)
+  const start = (currentPage-1)*pageSize
+  const items = filteredTickets.slice(start, start+pageSize)
   let lastDate = null, dayIndex = -1
   document.getElementById('ticket-tbody').innerHTML = items.map(t => {
     const st = getStatus(t.comment), sc = getStatusClass(st)
@@ -389,14 +389,14 @@ function renderTable() {
       </td>
     </tr>`
   }).join('')
-  const end = Math.min(start+PAGE_SIZE, filteredTickets.length)
+  const end = Math.min(start+pageSize, filteredTickets.length)
   document.getElementById('showing-text').textContent =
     filteredTickets.length ? `Showing ${start+1}–${end} of ${filteredTickets.length.toLocaleString()}` : ''
   renderPagination()
 }
 
 function renderPagination() {
-  const total = Math.ceil(filteredTickets.length/PAGE_SIZE)
+  const total = Math.ceil(filteredTickets.length/pageSize)
   const pg = document.getElementById('pagination')
   if (total <= 1) { pg.innerHTML=''; return }
   const pages = (() => { const s=new Set([1,total]); for(let i=Math.max(1,currentPage-2);i<=Math.min(total,currentPage+2);i++) s.add(i); return [...s].sort((a,b)=>a-b) })()
@@ -411,7 +411,7 @@ function renderPagination() {
 }
 
 function goPage(p) {
-  const total = Math.ceil(filteredTickets.length/PAGE_SIZE)
+  const total = Math.ceil(filteredTickets.length/pageSize)
   if (p<1||p>total) return
   currentPage=p; renderTable()
   document.querySelector('.table-wrap').scrollTop = 0
@@ -772,6 +772,12 @@ function setupFilters() {
       return b.commit()
     }))
     showToast(`Merged — removed ${toDelete.length} duplicate${toDelete.length===1?'':'s'}`, 'success')
+  })
+  document.getElementById('per-page-select').addEventListener('change', e => {
+    const v = e.target.value
+    pageSize = v === 'all' ? Infinity : parseInt(v)
+    currentPage = 1
+    renderTable()
   })
 }
 
