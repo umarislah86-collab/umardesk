@@ -276,6 +276,11 @@ body {
 .multi-select-search-wrap { padding: 6px 8px 4px; border-bottom: 1px solid var(--border); }
 .multi-select-search { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); padding: 5px 8px; font-size: 12px; outline: none; }
 .multi-select-search:focus { border-color: var(--accent); }
+
+/* ── Presence indicator ────────────────────────────────────────────────── */
+.presence-indicator { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); }
+.presence-avatar { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 2px 8px; font-size: 11px; color: var(--text); display: flex; align-items: center; gap: 4px; }
+.presence-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--resolve); display: inline-block; }
 .update-tag  { font-size: 10px; color: var(--accent); margin-top: 2px; opacity: .8; }
 
 /* ── Badges ────────────────────────────────────────────────────────────── */

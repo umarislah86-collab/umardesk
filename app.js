@@ -48,6 +48,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-overlay').addEventListener('click', openOverlay)
   document.getElementById('btn-add-ticket').addEventListener('click', openAdd)
   document.getElementById('btn-excl-sources').addEventListener('click', openExclModal)
+  initPresence()
   if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
     ;['btn-import','btn-clear-data','btn-merge-dupes','btn-expired-awaiting','btn-resolve-expired'].forEach(id => {
       const el = document.getElementById(id); if (el) el.style.display = 'none'
@@ -771,6 +772,38 @@ function setupFilters() {
       return b.commit()
     }))
     showToast(`Merged — removed ${toDelete.length} duplicate${toDelete.length===1?'':'s'}`, 'success')
+  })
+}
+
+// ── Presence ──────────────────────────────────────────────────────────────
+const PRESENCE_COL = 'umardesk_presence'
+const PRESENCE_TTL = 90000 // 90s — considered offline if not updated
+let presenceDocId = null
+
+function initPresence() {
+  const name = sessionStorage.getItem('ud_name') || 'Guest'
+  presenceDocId = 'sess_' + Math.random().toString(36).slice(2, 10)
+  const writePresence = () => {
+    db.collection(PRESENCE_COL).doc(presenceDocId).set({
+      name, lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    })
+  }
+  writePresence()
+  setInterval(writePresence, 30000)
+  window.addEventListener('beforeunload', () => {
+    db.collection(PRESENCE_COL).doc(presenceDocId).delete()
+  })
+  db.collection(PRESENCE_COL).onSnapshot(snap => {
+    const now = Date.now()
+    const active = snap.docs
+      .map(d => ({ name: d.data().name, lastSeen: d.data().lastSeen?.toMillis?.() || 0 }))
+      .filter(p => now - p.lastSeen < PRESENCE_TTL)
+      .sort((a,b) => a.name.localeCompare(b.name))
+    const el = document.getElementById('presence-indicator')
+    if (!el) return
+    el.innerHTML = active.length === 0 ? '' :
+      active.map(p => `<span class="presence-avatar"><span class="presence-dot"></span>${escHtml(p.name)}</span>`).join('')
+    el.title = active.map(p=>p.name).join(', ') + ' viewing'
   })
 }
 
