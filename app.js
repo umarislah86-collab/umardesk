@@ -31,7 +31,7 @@ let filteredTickets = []
 let currentPage = 1
 const PAGE_SIZE = 50
 let sortField = 'date', sortAsc = false
-let searchText = '', filterStatus = new Set(), filterSource = new Set(), filterDateFrom = '', filterDateTo = '', filterDuplicates = false, filterExpiredAwaiting = false
+let searchText = '', filterStatus = new Set(), filterSource = new Set(), filterTeam = new Set(), filterDateFrom = '', filterDateTo = '', filterDuplicates = false, filterExpiredAwaiting = false
 let excludedSources = new Set()
 let editingId = null
 let pipWindow = null
@@ -124,7 +124,7 @@ function loadTickets() {
 
 function saveTickets() {} // no-op — Firestore handles persistence
 
-function refreshAll() { applyFilters(); renderDashboard(); renderTable(); populateSourceFilter() }
+function refreshAll() { applyFilters(); renderDashboard(); renderTable(); populateSourceFilter(); populateTeamFilter() }
 
 // ── Status helpers ────────────────────────────────────────────────────────
 function getStatus(comment) {
@@ -141,6 +141,15 @@ function getStatus(comment) {
 
 function getStatusClass(s) {
   return { Resolve:'resolve', Dispatched:'dispatched', FCR:'fcr', Awaiting:'awaiting', 'Further Support':'ose', Defective:'defective', Other:'other' }[s] || 'other'
+}
+
+function extractTeam(comment) {
+  if (!comment) return null
+  const c = comment.toLowerCase()
+  if (!c.includes('dispatch')) return null
+  if (c.includes('onsite')) return 'Onsite Support'
+  const m = comment.match(/dispatched to (.+?)(?:\s*-\s*expert q)?$/i)
+  return m ? m[1].trim() : null
 }
 
 function normalizeSource(s) {
@@ -279,6 +288,7 @@ function applyFilters() {
     }
     if (filterStatus.size && !filterStatus.has(getStatus(t.comment))) return false
     if (filterSource.size && !filterSource.has((t.source||'').trim())) return false
+    if (filterTeam.size && !filterTeam.has(extractTeam(t.comment)||'')) return false
     if (filterDateFrom && t.date && t.date < filterDateFrom) return false
     if (filterDateTo   && t.date && t.date > filterDateTo)   return false
     if (dupSet && !dupSet.has(t.tickNumber)) return false
@@ -321,6 +331,31 @@ function populateSourceFilter() {
       const count = filterSource.size
       document.getElementById('source-filter-btn').textContent = count === 0 ? 'All Sources ▾' : `${count} Source${count>1?'s':''} ▾`
       document.getElementById('source-filter-btn').classList.toggle('active', count > 0)
+      applyFilters(); renderTable()
+    })
+  })
+}
+
+function populateTeamFilter() {
+  const teams = [...new Set(allTickets.map(t=>extractTeam(t.comment)).filter(Boolean))].sort()
+  const drop = document.getElementById('team-filter-dropdown')
+  drop.innerHTML = `<div class="multi-select-search-wrap"><input class="multi-select-search" id="team-search" placeholder="Search team..." autocomplete="off"></div>` +
+    teams.map(t =>
+      `<label><input type="checkbox" value="${escHtml(t)}" ${filterTeam.has(t)?'checked':''}> ${escHtml(t)}</label>`
+    ).join('')
+  drop.querySelector('#team-search').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase()
+    drop.querySelectorAll('label').forEach(lbl => {
+      lbl.style.display = lbl.textContent.toLowerCase().includes(q) ? '' : 'none'
+    })
+  })
+  drop.querySelector('#team-search').addEventListener('click', e => e.stopPropagation())
+  drop.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      filterTeam = new Set([...drop.querySelectorAll('input[type=checkbox]:checked')].map(c=>c.value))
+      const count = filterTeam.size
+      document.getElementById('team-filter-btn').textContent = count === 0 ? 'Resolver Team ▾' : `${count} Team${count>1?'s':''} ▾`
+      document.getElementById('team-filter-btn').classList.toggle('active', count > 0)
       applyFilters(); renderTable()
     })
   })
@@ -602,7 +637,8 @@ async function openOverlay() {
         const ql=q.toLowerCase()
         return allTickets
           .filter(t=>[t.tickNumber,t.description,t.comment,t.source,t.misc].some(f=>(f||'').toLowerCase().includes(ql)))
-          .slice(-30).reverse()
+          .sort((a,b)=>((b.date||'')+' '+(b.time||'')).localeCompare((a.date||'')+' '+(a.time||'')))
+          .slice(0, 200)
       }
     }
     pipWindow.document.title = 'UmarDesk'
@@ -658,12 +694,19 @@ function setupFilters() {
   // Multi-select source dropdown
   const sourceBtn = document.getElementById('source-filter-btn')
   const sourceDrop = document.getElementById('source-filter-dropdown')
-  sourceBtn.addEventListener('click', e => { e.stopPropagation(); sourceDrop.classList.toggle('open'); statusDrop.classList.remove('open') })
+  sourceBtn.addEventListener('click', e => { e.stopPropagation(); sourceDrop.classList.toggle('open'); statusDrop.classList.remove('open'); document.getElementById('team-filter-dropdown').classList.remove('open') })
   sourceDrop.addEventListener('click', e => e.stopPropagation())
-  document.addEventListener('click', () => { statusDrop.classList.remove('open'); sourceDrop.classList.remove('open') })
+
+  // Multi-select team dropdown
+  const teamBtn = document.getElementById('team-filter-btn')
+  const teamDrop = document.getElementById('team-filter-dropdown')
+  teamBtn.addEventListener('click', e => { e.stopPropagation(); teamDrop.classList.toggle('open'); statusDrop.classList.remove('open'); sourceDrop.classList.remove('open') })
+  teamDrop.addEventListener('click', e => e.stopPropagation())
+
+  document.addEventListener('click', () => { statusDrop.classList.remove('open'); sourceDrop.classList.remove('open'); teamDrop.classList.remove('open') })
   document.getElementById('btn-clear-filters').addEventListener('click',()=>{
     searchText=filterDateFrom=filterDateTo=''
-    filterStatus=new Set(); filterSource=new Set(); filterDuplicates=false; filterExpiredAwaiting=false
+    filterStatus=new Set(); filterSource=new Set(); filterTeam=new Set(); filterDuplicates=false; filterExpiredAwaiting=false
     document.getElementById('btn-duplicates').classList.remove('active')
     document.getElementById('btn-expired-awaiting').classList.remove('active')
     document.getElementById('btn-resolve-expired').style.display='none'
@@ -671,7 +714,9 @@ function setupFilters() {
     document.getElementById('status-filter-btn').classList.remove('active')
     document.getElementById('source-filter-btn').textContent='All Sources ▾'
     document.getElementById('source-filter-btn').classList.remove('active')
-    document.querySelectorAll('#status-filter-dropdown input, #source-filter-dropdown input').forEach(cb=>cb.checked=false)
+    document.getElementById('team-filter-btn').textContent='Resolver Team ▾'
+    document.getElementById('team-filter-btn').classList.remove('active')
+    document.querySelectorAll('#status-filter-dropdown input, #source-filter-dropdown input, #team-filter-dropdown input').forEach(cb=>cb.checked=false)
     ;['search-input','filter-date-from','filter-date-to'].forEach(id=>{ document.getElementById(id).value='' })
     applyFilters(); renderTable()
   })

@@ -273,6 +273,9 @@ body {
 }
 .multi-select-dropdown label:hover { background: var(--border); }
 .multi-select-dropdown input[type=checkbox] { accent-color: var(--accent); width: 13px; height: 13px; }
+.multi-select-search-wrap { padding: 6px 8px 4px; border-bottom: 1px solid var(--border); }
+.multi-select-search { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--text); padding: 5px 8px; font-size: 12px; outline: none; }
+.multi-select-search:focus { border-color: var(--accent); }
 .update-tag  { font-size: 10px; color: var(--accent); margin-top: 2px; opacity: .8; }
 
 /* ── Badges ────────────────────────────────────────────────────────────── */
