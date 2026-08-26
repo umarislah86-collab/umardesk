@@ -84,7 +84,7 @@ body {
 .tab-section.active { display: flex; flex-direction: column; }
 
 /* ── Dashboard ─────────────────────────────────────────────────────────── */
-.dashboard-content { padding: 20px 24px; display: flex; flex-direction: column; gap: 18px; }
+.dashboard-content { padding: 20px 24px; display: flex; flex-direction: column; gap: 18px; max-width: 1440px; margin-left: auto; margin-right: auto; width: 100%; }
 
 .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
 .stat-card {
@@ -181,6 +181,11 @@ body {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   flex-wrap: wrap;
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 .search-input {
   flex: 1;
@@ -215,10 +220,15 @@ body {
   color: var(--text2);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ── Table ─────────────────────────────────────────────────────────────── */
-.table-wrap { flex: 1; overflow: auto; min-height: 0; }
+.table-wrap { flex: 1; overflow: auto; min-height: 0; max-width: 1440px; margin-left: auto; margin-right: auto; width: 100%; }
 .ticket-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .ticket-table thead { position: sticky; top: 0; z-index: 10; background: var(--bg3); }
 .ticket-table th {
@@ -324,6 +334,7 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   padding: 9px 14px; border-top: 1px solid var(--border); background: var(--bg2);
   flex-shrink: 0; font-size: 12px; color: var(--text2);
+  max-width: 1440px; margin-left: auto; margin-right: auto; width: 100%; box-sizing: border-box;
 }
 #pagination { display: flex; align-items: center; gap: 3px; }
 #pagination button { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: 4px; padding: 4px 9px; font-size: 12px; cursor: pointer; min-width: 30px; transition: background .1s; }
