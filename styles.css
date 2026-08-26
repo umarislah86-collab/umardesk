@@ -275,6 +275,7 @@ body {
   display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 100;
   background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
   padding: 6px 0; min-width: 160px; box-shadow: 0 6px 20px rgba(0,0,0,.4);
+  max-height: 320px; overflow-y: auto;
 }
 .multi-select-dropdown.open { display: block; }
 .multi-select-dropdown label {
