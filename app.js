@@ -75,9 +75,33 @@ function loadTickets() {
   db.collection('umardesk_config').doc('stats_exclusions').get().then(doc => {
     if (doc.exists) excludedSources = new Set(doc.data().excludedSources || [])
   })
+  let migrated = false
   db.collection(COL).onSnapshot(snapshot => {
     allTickets = snapshot.docs.map(d => d.data())
     refreshAll()
+    if (!migrated && !localStorage.getItem('ud_misc_migrated')) {
+      migrated = true
+      const oldPat = /^Updated (\d{4}-\d{2}-\d{2}): (.+)$/
+      const toFix = allTickets.filter(t => t.misc && oldPat.test(t.misc))
+      if (toFix.length) {
+        const chunks = []
+        const fixed = toFix.map(t => {
+          const m = t.misc.match(oldPat)
+          return { ...t, date: m[1], misc: `Updated from ${t.date}: ${m[2]}` }
+        })
+        for (let i=0; i<fixed.length; i+=400) chunks.push(fixed.slice(i,i+400))
+        Promise.all(chunks.map(chunk => {
+          const b = db.batch()
+          chunk.forEach(t => b.set(db.collection(COL).doc(t.id), t))
+          return b.commit()
+        })).then(() => {
+          localStorage.setItem('ud_misc_migrated', '1')
+          showToast(`Migrated ${toFix.length} updated ticket${toFix.length===1?'':'s'} to latest date`, 'success')
+        })
+      } else {
+        localStorage.setItem('ud_misc_migrated', '1')
+      }
+    }
   }, err => showToast('Firebase: ' + err.message, 'error'))
   // Migrate from localStorage if Firebase empty
   const local = JSON.parse(localStorage.getItem('tickets') || '[]')
@@ -437,7 +461,7 @@ function handleOverlaySubmit(ticketNum, subject, actionKey, teamName) {
       const existSt=getStatus(existing.comment), newSt=getStatus(comment)
       const sameComment = existing.comment.toLowerCase() === comment.toLowerCase()
       if (existSt===newSt && sameComment) return { success:false, isDuplicate:true, sameStatus:true, existing }
-      const updated={ ...existing, comment, source, misc:`Updated ${todayISO()}: ${existSt} → ${newSt}` }
+      const updated={ ...existing, comment, source, date:todayISO(), time:nowTime(), misc:`Updated from ${existing.date}: ${existSt} → ${newSt}` }
       dbSet(updated)
       return { success:true, isUpdate:true, ticket:updated }
     }
