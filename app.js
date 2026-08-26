@@ -815,14 +815,36 @@ function initPresence() {
 
 // ── Exclude Sources Modal ─────────────────────────────────────────────────
 function openExclModal() {
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
   const allSources = [...new Set(allTickets.map(t=>(t.source||'Unknown').trim()))].sort()
-  document.getElementById('excl-source-list').innerHTML = allSources.map(src =>
-    `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px">
+  document.getElementById('excl-source-list').innerHTML = allSources.map(src => {
+    const count = allTickets.filter(t=>(t.source||'Unknown').trim()===src).length
+    const delBtn = isLocal
+      ? `<button onclick="deleteTicketsBySource('${escHtml(src.replace(/'/g,"\\'"))}')" title="Delete all tickets from this source"
+           style="margin-left:auto;background:none;border:1px solid rgba(248,81,73,.3);border-radius:4px;color:#f85149;padding:2px 7px;font-size:11px;cursor:pointer;flex-shrink:0;">🗑 ${count}</button>`
+      : `<span style="margin-left:auto;font-size:11px;color:var(--text2)">${count}</span>`
+    return `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px">
       <input type="checkbox" value="${escHtml(src)}" ${excludedSources.has(src)?'checked':''} style="accent-color:var(--accent);width:14px;height:14px">
-      ${escHtml(src)}
+      <span style="flex:1">${escHtml(src)}</span>
+      ${delBtn}
     </label>`
-  ).join('')
+  }).join('')
   document.getElementById('excl-modal-overlay').classList.add('show')
+}
+
+async function deleteTicketsBySource(src) {
+  const toDelete = allTickets.filter(t=>(t.source||'Unknown').trim()===src)
+  if (!toDelete.length) { showToast('No tickets found for this source','info'); return }
+  if (!confirm(`Delete all ${toDelete.length} ticket${toDelete.length===1?'':'s'} from "${src}"? This cannot be undone.`)) return
+  const chunks = []
+  for (let i=0;i<toDelete.length;i+=400) chunks.push(toDelete.slice(i,i+400))
+  await Promise.all(chunks.map(chunk => {
+    const b = db.batch()
+    chunk.forEach(t => b.delete(db.collection(COL).doc(t.id)))
+    return b.commit()
+  }))
+  showToast(`Deleted ${toDelete.length} ticket${toDelete.length===1?'':'s'} from "${src}"`, 'success')
+  closeExclModal()
 }
 function closeExclModal() { document.getElementById('excl-modal-overlay').classList.remove('show') }
 function saveExclSources() {
