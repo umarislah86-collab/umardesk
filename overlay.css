@@ -219,6 +219,15 @@ body {
 .ov-badge-defective  { background: rgba(248,81,73,.15);   color: var(--dispatched); }
 .ov-badge-other      { background: rgba(139,148,158,.15); color: var(--other); }
 
+/* ── Watch button ──────────────────────────────────────────────────────── */
+.ov-watch-btn {
+  background: none; border: 1px solid var(--awaiting); border-radius: 4px;
+  color: var(--awaiting); padding: 3px 10px; font-size: 11px; cursor: pointer;
+  transition: background .1s;
+}
+.ov-watch-btn:hover { background: rgba(240,136,62,.12); }
+.ov-watch-btn.ov-watch-done { border-color: var(--resolve); color: var(--resolve); cursor: default; }
+
 /* ── Toast ─────────────────────────────────────────────────────────────── */
 .ov-toast {
   position: fixed; bottom: 8px; left: 10px; right: 10px;

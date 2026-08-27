@@ -644,6 +644,12 @@ async function openOverlay() {
       getStatus,
       getExcludedSources: ()=>excludedSources,
       submit: handleOverlaySubmit,
+      watchTicket: (tickNum) => {
+        const t = allTickets.find(x => x.tickNumber.toLowerCase() === tickNum.toLowerCase())
+        if (!t) return false
+        db.collection(COL).doc(t.id).set({ ...t, watch: true })
+        return true
+      },
       search: q => {
         if(!q) return []
         const ql=q.toLowerCase()

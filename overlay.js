@@ -7,6 +7,7 @@ const HELPER_URL = 'http://localhost:9091/'
 
 let mode = 'log'
 let helperConnected = false
+let lastLoggedTicket = null
 
 // ── Build HTML ─────────────────────────────────────────────────────────────
 document.body.innerHTML = `
@@ -67,6 +68,9 @@ document.body.innerHTML = `
     <div class="ov-actions" id="action-buttons"></div>
 
     <div id="ov-result" class="ov-result"></div>
+    <div id="ov-watch-row" style="display:none;padding:0 10px 6px;text-align:right">
+      <button id="btn-ov-watch" class="ov-watch-btn">👀 Watch this ticket</button>
+    </div>
   </div>
 
   <!-- SEARCH MODE -->
@@ -166,11 +170,17 @@ async function submitAction(key, action) {
   }
 
   if (result.success) {
+    lastLoggedTicket = ticketNum
     el.textContent = result.isUpdate
       ? `↻ Updated: ${ticketNum}`
       : `✓ ${ticketNum} — ${action.label.replace(/[^\w\s–]/gu, '').trim()}`
     el.className = 'ov-result ' + (result.isUpdate ? 'ov-updated' : 'ov-logged')
-    setTimeout(() => { el.textContent = ''; el.className = 'ov-result' }, 4500)
+    const watchRow = document.getElementById('ov-watch-row')
+    const watchBtn = document.getElementById('btn-ov-watch')
+    watchRow.style.display = ''
+    watchBtn.textContent = '👀 Watch this ticket'
+    watchBtn.classList.remove('ov-watch-done')
+    setTimeout(() => { el.textContent = ''; el.className = 'ov-result'; watchRow.style.display = 'none' }, 4500)
 
     // Clear preview after logging
     setTimeout(() => {
@@ -273,6 +283,21 @@ function renderSearchResults(results) {
     </div>`
   }).join('')
 }
+
+// ── Watch button ──────────────────────────────────────────────────────────
+document.getElementById('btn-ov-watch').addEventListener('click', () => {
+  if (!lastLoggedTicket) return
+  const ok = bridge.watchTicket(lastLoggedTicket)
+  const btn = document.getElementById('btn-ov-watch')
+  if (ok) {
+    btn.textContent = '✓ Watching'
+    btn.classList.add('ov-watch-done')
+    btn.disabled = true
+    toast(`👀 Watching ${lastLoggedTicket}`, 'info')
+  } else {
+    toast('Could not find ticket to watch', 'warn')
+  }
+})
 
 // ── Utils ─────────────────────────────────────────────────────────────────
 function fmtDate(d) { if(!d) return ''; const m=d.match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1].slice(2)}`:d }
