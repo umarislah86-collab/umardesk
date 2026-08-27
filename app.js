@@ -31,7 +31,7 @@ let filteredTickets = []
 let currentPage = 1
 let pageSize = 50
 let sortField = 'date', sortAsc = false
-let searchText = '', filterStatus = new Set(), filterSource = new Set(), filterTeam = new Set(), filterDateFrom = '', filterDateTo = '', filterDuplicates = false, filterExpiredAwaiting = false
+let searchText = '', filterStatus = new Set(), filterSource = new Set(), filterTeam = new Set(), filterDateFrom = '', filterDateTo = '', filterDuplicates = false, filterExpiredAwaiting = false, filterWatchlist = false
 let excludedSources = new Set()
 let editingId = null
 let pipWindow = null
@@ -299,6 +299,7 @@ function applyFilters() {
       const y=cutoff.getFullYear(),m=String(cutoff.getMonth()+1).padStart(2,'0'),d=String(cutoff.getDate()).padStart(2,'0')
       if (!t.date || t.date > `${y}-${m}-${d}`) return false
     }
+    if (filterWatchlist && !t.watch) return false
     return true
   })
   filteredTickets.sort((a,b) => {
@@ -372,8 +373,9 @@ function renderTable() {
     const updateTag = t.misc && t.misc.startsWith('Updated')
       ? `<div class="update-tag">↻ ${escHtml(t.misc)}</div>` : ''
     if (t.date !== lastDate) { lastDate = t.date; dayIndex++ }
-    const rowClass = dayIndex % 2 === 0 ? '' : ' class="tr-alt-day"'
-    return `<tr${rowClass}>
+    const rowClass = (dayIndex % 2 === 0 ? '' : 'tr-alt-day') + (t.watch ? ' tr-watched' : '')
+    const rowClassAttr = rowClass ? ` class="${rowClass}"` : ''
+    return `<tr${rowClassAttr}>
       <td class="td-date">${formatDate(t.date)}${t.time?`<div class="td-time">${escHtml(t.time)}</div>`:''}</td>
       <td class="td-tick"><a href="https://itsm.services.sap/incident.do?sysparm_query=number=${escHtml(t.tickNumber)}" target="_blank" class="tick-link">${escHtml(t.tickNumber)}</a></td>
       <td class="td-desc" title="${escHtml(t.description)}">${escHtml(truncate(t.description,60))}${t.misc&&!t.misc.startsWith('Updated')?`<div class="comment-sub">📝 ${escHtml(truncate(t.misc,50))}</div>`:''}</td>
@@ -384,6 +386,7 @@ function renderTable() {
       </td>
       <td class="td-src">${escHtml(t.source)}</td>
       <td class="td-actions">
+        <button class="btn-icon btn-watch ${t.watch?'active':''}" onclick="toggleWatch('${t.id}')" title="${t.watch?'Unwatch':'Watch — check back later'}">👀</button>
         <button class="btn-icon btn-edit"   onclick="openEdit('${t.id}')"       title="Edit">✏</button>
         <button class="btn-icon btn-delete" onclick="confirmDelete('${t.id}')"  title="Delete">🗑</button>
       </td>
@@ -481,6 +484,14 @@ function confirmDelete(id) {
   const t=allTickets.find(x=>x.id===id)
   if(!t||!confirm(`Delete ${t.tickNumber}?`)) return
   dbDelete(id); showToast('Ticket deleted','success')
+}
+
+function toggleWatch(id) {
+  const t = allTickets.find(x => x.id === id)
+  if (!t) return
+  const updated = { ...t, watch: !t.watch }
+  db.collection(COL).doc(id).set(updated)
+  showToast(updated.watch ? '👀 Watching — will appear in Watchlist filter' : 'Removed from watchlist', 'info')
 }
 
 // ── Overlay submit (called by overlay.js via bridge) ──────────────────────
@@ -707,8 +718,9 @@ function setupFilters() {
   document.addEventListener('click', () => { statusDrop.classList.remove('open'); sourceDrop.classList.remove('open'); teamDrop.classList.remove('open') })
   document.getElementById('btn-clear-filters').addEventListener('click',()=>{
     searchText=filterDateFrom=filterDateTo=''
-    filterStatus=new Set(); filterSource=new Set(); filterTeam=new Set(); filterDuplicates=false; filterExpiredAwaiting=false
+    filterStatus=new Set(); filterSource=new Set(); filterTeam=new Set(); filterDuplicates=false; filterExpiredAwaiting=false; filterWatchlist=false
     document.getElementById('btn-duplicates').classList.remove('active')
+    document.getElementById('btn-watchlist').classList.remove('active')
     document.getElementById('btn-expired-awaiting').classList.remove('active')
     document.getElementById('btn-resolve-expired').style.display='none'
     document.getElementById('status-filter-btn').textContent='All Status ▾'
@@ -747,6 +759,11 @@ function setupFilters() {
   document.getElementById('btn-duplicates').addEventListener('click',()=>{
     filterDuplicates=!filterDuplicates
     document.getElementById('btn-duplicates').classList.toggle('active', filterDuplicates)
+    applyFilters(); renderTable()
+  })
+  document.getElementById('btn-watchlist').addEventListener('click',()=>{
+    filterWatchlist=!filterWatchlist
+    document.getElementById('btn-watchlist').classList.toggle('active', filterWatchlist)
     applyFilters(); renderTable()
   })
   document.getElementById('btn-merge-dupes').addEventListener('click', async () => {

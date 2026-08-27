@@ -266,6 +266,9 @@ body {
 .comment-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
 .tr-alt-day { background: #1a2030; }
 .tr-alt-day:hover { background: #1e2535 !important; }
+.tr-watched { background: rgba(240,136,62,.06) !important; }
+.tr-watched:hover { background: rgba(240,136,62,.12) !important; }
+.btn-watch.active { color: var(--awaiting); }
 
 /* ── Multi-select dropdown ─────────────────────────────────────────────── */
 .multi-select-wrap { position: relative; }
