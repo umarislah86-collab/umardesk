@@ -85,6 +85,7 @@ document.body.innerHTML = `
   <div id="search-panel" style="display:none;flex-direction:column;flex:1;min-height:0;">
     <div class="ov-field-row" style="padding:8px 10px 4px">
       <input id="search-input" class="ov-input" placeholder="🔍  Ticket #, subject, or team...">
+      <button id="btn-ov-watchlist" class="ov-watchlist-btn" title="Show watched tickets only">👀</button>
     </div>
     <div id="search-results" class="ov-search-results"></div>
   </div>
@@ -275,13 +276,26 @@ function setMode(m) {
   document.getElementById('search-panel').style.display = m === 'search' ? 'flex' : 'none'
   document.getElementById('mode-log').classList.toggle('active', m === 'log')
   document.getElementById('mode-search').classList.toggle('active', m === 'search')
-  if (m === 'search') document.getElementById('search-input').focus()
+  if (m === 'search') { document.getElementById('search-input').focus(); runSearch() }
 }
 
 // ── Search ────────────────────────────────────────────────────────────────
-document.getElementById('search-input').addEventListener('input', e => {
-  renderSearchResults(bridge.search(e.target.value.trim()))
+let ovWatchlistActive = false
+
+document.getElementById('btn-ov-watchlist').addEventListener('click', () => {
+  ovWatchlistActive = !ovWatchlistActive
+  document.getElementById('btn-ov-watchlist').classList.toggle('active', ovWatchlistActive)
+  runSearch()
 })
+
+document.getElementById('search-input').addEventListener('input', () => runSearch())
+
+function runSearch() {
+  const q = document.getElementById('search-input').value.trim()
+  let results = bridge.search(q)
+  if (ovWatchlistActive) results = results.filter(t => t.watch)
+  renderSearchResults(results)
+}
 
 function renderSearchResults(results) {
   const el = document.getElementById('search-results')
