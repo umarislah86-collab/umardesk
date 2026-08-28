@@ -292,8 +292,15 @@ document.getElementById('search-input').addEventListener('input', () => runSearc
 
 function runSearch() {
   const q = document.getElementById('search-input').value.trim()
-  let results = bridge.search(q)
-  if (ovWatchlistActive) results = results.filter(t => t.watch)
+  let results
+  if (!q && ovWatchlistActive) {
+    results = bridge.getAllTickets()
+      .filter(t => t.watch)
+      .sort((a,b)=>((b.date||'')+' '+(b.time||'')).localeCompare((a.date||'')+' '+(a.time||'')))
+  } else {
+    results = bridge.search(q)
+    if (ovWatchlistActive) results = results.filter(t => t.watch)
+  }
   renderSearchResults(results)
 }
 
