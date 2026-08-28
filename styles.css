@@ -6,8 +6,8 @@
   --border: #30363d;
   --text: #e6edf3;
   --text2: #8b949e;
-  --accent: #58a6ff;
-  --accent-h: #79b8ff;
+  --accent: #e63946;
+  --accent-h: #ff4d5a;
   --resolve: #3fb950;
   --dispatched: #f85149;
   --fcr: #58a6ff;
@@ -40,8 +40,8 @@ body {
 }
 .header-left { display: flex; align-items: center; gap: 10px; }
 .logo { font-size: 20px; }
-.app-header h1 { font-size: 16px; font-weight: 700; letter-spacing: .3px; }
-.app-subtitle { font-size: 11px; color: var(--text2); letter-spacing: .5px; text-transform: uppercase; margin-left: 2px; }
+.app-header h1 { font-size: 17px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; }
+.app-subtitle { font-size: 10px; color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase; margin-left: 2px; opacity: .7; }
 .header-right { display: flex; gap: 8px; align-items: center; }
 
 /* ── Tabs ──────────────────────────────────────────────────────────────── */
@@ -91,14 +91,14 @@ body {
   background: var(--bg2);
   border: 1px solid var(--border);
   border-top: 3px solid var(--border);
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 16px;
   text-align: center;
   transition: transform .1s;
 }
-.stat-card:hover { transform: translateY(-1px); }
-.stat-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-.stat-value { font-size: 28px; font-weight: 700; }
+.stat-card:hover { transform: translateY(-2px); }
+.stat-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 600; }
+.stat-value { font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
 .card-total     { border-top-color: var(--accent); }
 .card-dispatched{ border-top-color: var(--dispatched); }
 .card-dispatched .stat-value { color: var(--dispatched); }

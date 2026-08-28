@@ -1,7 +1,7 @@
 :root {
   --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
   --border: #30363d; --text: #e6edf3; --text2: #8b949e;
-  --accent: #58a6ff; --resolve: #3fb950; --dispatched: #f85149;
+  --accent: #e63946; --resolve: #3fb950; --dispatched: #f85149;
   --fcr: #58a6ff; --awaiting: #f0883e; --other: #8b949e;
 }
 
@@ -64,7 +64,7 @@ body {
   transition: background .1s, color .1s, border-color .1s; text-align: center;
 }
 .ov-source-pill:hover { background: #2d333b; color: var(--text); }
-.ov-source-pill.active { background: rgba(88,166,255,.15); color: var(--accent); border-color: var(--accent); font-weight: 600; }
+.ov-source-pill.active { background: rgba(230,57,70,.15); color: var(--accent); border-color: var(--accent); font-weight: 600; }
 
 /* ── Helper banner ─────────────────────────────────────────────────────── */
 .helper-banner {
