@@ -284,8 +284,9 @@ function applyFilters() {
     : null
   filteredTickets = allTickets.filter(t => {
     if (searchText) {
-      const q = searchText.toLowerCase()
-      if (![t.tickNumber,t.description,t.comment,t.source,t.misc].some(f=>(f||'').toLowerCase().includes(q))) return false
+      const terms = searchText.toLowerCase().split(/\s+/).filter(Boolean)
+      const fields = [t.tickNumber,t.description,t.comment,t.source,t.misc].map(f=>(f||'').toLowerCase()).join(' ')
+      if (!terms.every(term => fields.includes(term))) return false
     }
     if (filterStatus.size && !filterStatus.has(getStatus(t.comment))) return false
     if (filterSource.size && !filterSource.has((t.source||'').trim())) return false
@@ -652,9 +653,12 @@ async function openOverlay() {
       },
       search: q => {
         if(!q) return []
-        const ql=q.toLowerCase()
+        const terms = q.toLowerCase().split(/\s+/).filter(Boolean)
         return allTickets
-          .filter(t=>[t.tickNumber,t.description,t.comment,t.source,t.misc].some(f=>(f||'').toLowerCase().includes(ql)))
+          .filter(t => {
+            const fields = [t.tickNumber,t.description,t.comment,t.source,t.misc].map(f=>(f||'').toLowerCase()).join(' ')
+            return terms.every(term => fields.includes(term))
+          })
           .sort((a,b)=>((b.date||'')+' '+(b.time||'')).localeCompare((a.date||'')+' '+(a.time||'')))
           .slice(0, 200)
       }
