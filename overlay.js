@@ -8,6 +8,7 @@ const HELPER_URL = 'http://localhost:9091/'
 let mode = 'log'
 let helperConnected = false
 let lastLoggedTicket = null
+let selectedSource = 'Expert Q'
 
 // ── Build HTML ─────────────────────────────────────────────────────────────
 document.body.innerHTML = `
@@ -26,6 +27,13 @@ document.body.innerHTML = `
   <div id="log-panel">
     <div id="helper-banner" class="helper-banner disconnected">
       🔴 Clipboard helper not running — run <b>start.bat</b> to enable one-click logging
+    </div>
+
+    <!-- Source selector -->
+    <div class="ov-source-row" id="source-pills">
+      <button class="ov-source-pill" data-source="Phone">📞 Phone</button>
+      <button class="ov-source-pill" data-source="Portal">🌐 Portal</button>
+      <button class="ov-source-pill active" data-source="Expert Q">⭐ Expert Q</button>
     </div>
 
     <!-- Read-only preview of last captured clipboard values -->
@@ -82,6 +90,15 @@ document.body.innerHTML = `
   </div>
 </div>
 `
+
+// ── Source pill selection ──────────────────────────────────────────────────
+document.querySelectorAll('.ov-source-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedSource = btn.dataset.source
+    document.querySelectorAll('.ov-source-pill').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+  })
+})
 
 // ── Build action buttons ───────────────────────────────────────────────────
 const actionContainer = document.getElementById('action-buttons')
@@ -161,7 +178,7 @@ async function submitAction(key, action) {
     }
   }
 
-  const result = bridge.submit(ticketNum, subject, key, teamName)
+  const result = bridge.submit(ticketNum, subject, key, selectedSource, teamName)
   const el = document.getElementById('ov-result')
 
   if (!result.success && result.sameStatus) {

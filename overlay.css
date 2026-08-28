@@ -56,6 +56,16 @@ body {
 .helper-dot.connected    { background: var(--resolve); box-shadow: 0 0 4px rgba(63,185,80,.5); }
 .helper-dot.disconnected { background: var(--dispatched); }
 
+/* ── Source pills ──────────────────────────────────────────────────────── */
+.ov-source-row { display: flex; gap: 5px; padding: 6px 10px 2px; }
+.ov-source-pill {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 5px;
+  color: var(--text2); padding: 5px 4px; font-size: 11px; cursor: pointer;
+  transition: background .1s, color .1s, border-color .1s; text-align: center;
+}
+.ov-source-pill:hover { background: #2d333b; color: var(--text); }
+.ov-source-pill.active { background: rgba(88,166,255,.15); color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
 /* ── Helper banner ─────────────────────────────────────────────────────── */
 .helper-banner {
   margin: 6px 10px 2px;

@@ -15,14 +15,12 @@ const dbDelete = id => db.collection(COL).doc(id).delete()
 
 // ── Constants ─────────────────────────────────────────────────────────────
 const ACTIONS = {
-  awaiting_ss: { label: '⏳ Awaiting – Self Service', comment: 'awaiting info',       source: 'Self service', color: '#f0883e', needsTeam: false },
-  awaiting_eq: { label: '⏳ Awaiting – Expert Q',     comment: 'awaiting info',       source: 'Expert Q',    color: '#f0883e', needsTeam: false },
-  resolved_ss: { label: '✅ Resolved – Self Service', comment: 'resolved',            source: 'Self service', color: '#3fb950', needsTeam: false },
-  resolved:    { label: '✅ Resolved – Expert Q',     comment: 'resolved',            source: 'Expert Q',    color: '#3fb950', needsTeam: false },
-  fcr:         { label: '📞 FCR – Phone',             comment: 'FCR',                 source: 'Phone',       color: '#58a6ff', needsTeam: false },
-  ose:         { label: '🏢 OSE-Further Support',     comment: 'OSE-Further Support', source: 'Expert Q',    color: '#9c88ff', needsTeam: false },
-  defective:   { label: '⚠️ Defective Dispatch',      comment: 'defective dispatch',  source: 'Expert Q',    color: '#f85149', needsTeam: false },
-  dispatch:    { label: '🚀 Dispatched – Expert Q',   comment: 'dispatched to',       source: 'Expert Q',    color: '#63b3ed', needsTeam: true  }
+  awaiting:  { label: '⏳ Awaiting',        comment: 'awaiting info',       color: '#f0883e', needsTeam: false },
+  resolved:  { label: '✅ Resolved',         comment: 'resolved',            color: '#3fb950', needsTeam: false },
+  fcr:       { label: '📞 FCR',              comment: 'FCR',                 color: '#58a6ff', needsTeam: false },
+  ose:       { label: '🏢 Further Support',  comment: 'OSE-Further Support', color: '#9c88ff', needsTeam: false },
+  defective: { label: '⚠️ Defective',        comment: 'defective dispatch',  color: '#f85149', needsTeam: false },
+  dispatch:  { label: '🚀 Dispatch',         comment: 'dispatched to',       color: '#63b3ed', needsTeam: true  },
 }
 
 // ── State ─────────────────────────────────────────────────────────────────
@@ -156,7 +154,7 @@ function extractTeam(comment) {
 function normalizeSource(s) {
   if (!s) return ''
   const l = s.toLowerCase().replace(/-/g,' ').replace(/\s+/g,' ').trim()
-  if (l.startsWith('self') || l === 'ss') return 'Self service'
+  if (l.startsWith('self') || l === 'ss' || l === 'portal') return 'Portal'
   if (l.startsWith('expert') || l === 'eq') return 'Expert Q'
   if (l === 'phone' || l === 'ph') return 'Phone'
   return s.trim()
@@ -496,11 +494,11 @@ function toggleWatch(id) {
 }
 
 // ── Overlay submit (called by overlay.js via bridge) ──────────────────────
-function handleOverlaySubmit(ticketNum, subject, actionKey, teamName) {
+function handleOverlaySubmit(ticketNum, subject, actionKey, sourceOverride, teamName) {
   const action=ACTIONS[actionKey]
   if(!action) return { success:false, error:'Unknown action' }
   const comment = action.needsTeam ? `dispatched to ${teamName||'?'} - Expert Q` : action.comment
-  const source = normalizeSource(action.source)
+  const source = normalizeSource(sourceOverride || 'Expert Q')
 
   const existing = allTickets.find(t => t.tickNumber.toLowerCase()===ticketNum.toLowerCase())
   if (existing) {
