@@ -101,6 +101,24 @@ function loadTickets() {
         localStorage.setItem('ud_misc_migrated', '1')
       }
     }
+    if (!localStorage.getItem('ud_source_migrated')) {
+      const toFix = allTickets.filter(t => (t.source||'').toLowerCase() === 'self service')
+      if (toFix.length) {
+        const chunks = []
+        const fixed = toFix.map(t => ({ ...t, source: 'Portal' }))
+        for (let i=0; i<fixed.length; i+=400) chunks.push(fixed.slice(i,i+400))
+        Promise.all(chunks.map(chunk => {
+          const b = db.batch()
+          chunk.forEach(t => b.set(db.collection(COL).doc(t.id), t))
+          return b.commit()
+        })).then(() => {
+          localStorage.setItem('ud_source_migrated', '1')
+          showToast(`Renamed ${toFix.length} "Self service" → "Portal"`, 'success')
+        })
+      } else {
+        localStorage.setItem('ud_source_migrated', '1')
+      }
+    }
   }, err => showToast('Firebase: ' + err.message, 'error'))
   // Migrate from localStorage if Firebase empty
   const local = JSON.parse(localStorage.getItem('tickets') || '[]')
