@@ -229,6 +229,16 @@ body {
 .ov-badge-defective  { background: rgba(248,81,73,.15);   color: var(--dispatched); }
 .ov-badge-other      { background: rgba(139,148,158,.15); color: var(--other); }
 
+/* ── Prayer countdown ──────────────────────────────────────────────────── */
+.prayer-countdown {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 2px 10px 0; padding: 5px 9px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 5px;
+  font-size: 11px;
+}
+.prayer-label { color: var(--text2); }
+.prayer-timer { font-family: 'Barlow Condensed', monospace; font-size: 14px; font-weight: 700; color: var(--resolve); letter-spacing: .5px; }
+
 /* ── Watch button ──────────────────────────────────────────────────────── */
 .ov-watch-btn {
   background: none; border: 1px solid var(--awaiting); border-radius: 4px;

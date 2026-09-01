@@ -523,8 +523,6 @@ function handleOverlaySubmit(ticketNum, subject, actionKey, sourceOverride, team
     const isRef = excludedSources.has((existing.source||'Unknown').trim())
     if (!isRef) {
       const existSt=getStatus(existing.comment), newSt=getStatus(comment)
-      const sameComment = existing.comment.toLowerCase() === comment.toLowerCase()
-      if (existSt===newSt && sameComment) return { success:false, isDuplicate:true, sameStatus:true, existing }
       const updated={ ...existing, comment, source, date:todayISO(), time:nowTime(), misc:`Updated from ${existing.date}: ${existSt} → ${newSt}` }
       dbSet(updated)
       return { success:true, isUpdate:true, ticket:updated }

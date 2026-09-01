@@ -73,6 +73,12 @@ document.body.innerHTML = `
 
     <div id="ov-status-bar" class="ov-status-bar"></div>
 
+    <!-- Prayer countdown -->
+    <div id="prayer-countdown" class="prayer-countdown">
+      <span id="prayer-label" class="prayer-label">—</span>
+      <span id="prayer-timer" class="prayer-timer">--:--</span>
+    </div>
+
     <div class="ov-actions" id="action-buttons"></div>
 
     <div id="ov-result" class="ov-result"></div>
@@ -171,10 +177,8 @@ async function submitAction(key, action) {
     if (!isRef) {
       const existSt = bridge.getStatus(existing.comment)
       const newSt = bridge.getStatus(action.needsTeam ? `dispatched to ${teamName}` : action.comment)
-      const sameComment = existing.comment.toLowerCase() === (action.needsTeam ? `dispatched to ${teamName} - expert q` : action.comment).toLowerCase()
-      if (existSt === newSt && sameComment) {
-        toast(`Already logged as "${existSt}" on ${fmtDate(existing.date)}`, 'warn')
-        return
+      if (existSt === newSt) {
+        toast(`Re-logging "${existSt}" — updating timestamp`, 'info')
       }
     }
   }
@@ -337,7 +341,79 @@ document.getElementById('btn-ov-watch').addEventListener('click', () => {
   }
 })
 
-// ── Utils ─────────────────────────────────────────────────────────────────
+// ── Prayer time countdown ─────────────────────────────────────────────────
+const PRAYERS = ['Subuh','Zohor','Asar','Maghrib','Isyak']
+let prayerToday = null
+
+async function loadPrayerTimes() {
+  try {
+    const res = await fetch('/waktu_solat.csv?v=' + new Date().toDateString())
+    const text = await res.text()
+    const rows = text.trim().split('\n').slice(1)
+    const today = new Date()
+    const dd = String(today.getDate()).padStart(2,'0')
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const mm = months[today.getMonth()]
+    const yyyy = today.getFullYear()
+    const key = `${dd}-${mm}-${yyyy}`
+    const row = rows.find(r => r.startsWith(key))
+    if (!row) return
+    const cols = row.split(',')
+    // Tarikh,Hijri,Hari,Imsak,Subuh,Syuruk,Zohor,Asar,Maghrib,Isyak
+    prayerToday = {
+      Subuh:   cols[4].trim(),
+      Zohor:   cols[6].trim(),
+      Asar:    cols[7].trim(),
+      Maghrib: cols[8].trim(),
+      Isyak:   cols[9].trim(),
+    }
+  } catch(e) { /* not running locally, skip */ }
+}
+
+function parseTime(str) {
+  if (!str) return null
+  const m = str.match(/(\d+):(\d+)\s*(am|pm)/i)
+  if (!m) return null
+  let h = parseInt(m[1]), min = parseInt(m[2])
+  const pm = m[3].toLowerCase() === 'pm'
+  if (pm && h !== 12) h += 12
+  if (!pm && h === 12) h = 0
+  const d = new Date()
+  d.setHours(h, min, 0, 0)
+  return d
+}
+
+function tickPrayer() {
+  if (!prayerToday) return
+  const now = new Date()
+  for (const name of PRAYERS) {
+    const t = parseTime(prayerToday[name])
+    if (!t) continue
+    const diff = t - now
+    if (diff > 0) {
+      const h = Math.floor(diff / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+      const label = document.getElementById('prayer-label')
+      const timer = document.getElementById('prayer-timer')
+      const timeStr = prayerToday[name]
+      label.textContent = `until ${name} (${timeStr})`
+      timer.textContent = h > 0
+        ? `${h}h ${String(m).padStart(2,'0')}m`
+        : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+      const urgent = diff < 600000 // < 10 min
+      timer.style.color = urgent ? 'var(--awaiting)' : 'var(--resolve)'
+      return
+    }
+  }
+  document.getElementById('prayer-label').textContent = 'Isyak sudah lepas'
+  document.getElementById('prayer-timer').textContent = '—'
+}
+
+loadPrayerTimes().then(() => {
+  tickPrayer()
+  setInterval(tickPrayer, 1000)
+})
 function fmtDate(d) { if(!d) return ''; const m=d.match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1].slice(2)}`:d }
 function trunc(s, n) { return s&&s.length>n?s.slice(0,n)+'…':(s||'') }
 function esc(s) { if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
