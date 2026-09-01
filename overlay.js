@@ -383,6 +383,8 @@ function parseTime(str) {
   return d
 }
 
+let lastAlertedPrayer = null
+
 function tickPrayer() {
   if (!prayerToday) return
   const now = new Date()
@@ -401,9 +403,15 @@ function tickPrayer() {
       timer.textContent = h > 0
         ? `${h}h ${String(m).padStart(2,'0')}m`
         : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-      const urgent = diff < 600000 // < 10 min
+      const urgent = diff < 600000
       timer.style.color = urgent ? 'var(--awaiting)' : 'var(--resolve)'
       return
+    } else {
+      // This prayer just passed — alert once
+      if (lastAlertedPrayer !== name) {
+        lastAlertedPrayer = name
+        setTimeout(() => alert(`🕌 DA MASUK WAKTU ${name.toUpperCase()} WOIII`), 100)
+      }
     }
   }
   document.getElementById('prayer-label').textContent = 'Isyak sudah lepas'
