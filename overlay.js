@@ -202,6 +202,7 @@ async function submitAction(key, action) {
     watchRow.style.display = ''
     watchBtn.textContent = '👀 Watch this ticket'
     watchBtn.classList.remove('ov-watch-done')
+    watchBtn.disabled = false
     setTimeout(() => { el.textContent = ''; el.className = 'ov-result'; watchRow.style.display = 'none' }, 4500)
 
     // Clear preview after logging
