@@ -87,6 +87,15 @@ document.body.innerHTML = `
     </div>
   </div>
 
+  <!-- Prayer alert modal -->
+  <div id="prayer-alert" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;align-items:center;justify-content:center;">
+    <div style="background:#1a0a0a;border:2px solid var(--accent);border-radius:10px;padding:24px 28px;text-align:center;max-width:240px;">
+      <div style="font-size:28px;margin-bottom:8px">🕌</div>
+      <div id="prayer-alert-text" style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--accent);letter-spacing:1px;margin-bottom:16px;text-transform:uppercase;"></div>
+      <button id="prayer-alert-ok" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:8px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">OK</button>
+    </div>
+  </div>
+
   <!-- SEARCH MODE -->
   <div id="search-panel" style="display:none;flex-direction:column;flex:1;min-height:0;">
     <div class="ov-field-row" style="padding:8px 10px 4px">
@@ -384,7 +393,21 @@ function parseTime(str) {
   return d
 }
 
-let lastAlertedPrayer = null
+let lastAlertedPrayer = sessionStorage.getItem('ov_alerted_prayer') || null
+
+document.getElementById('prayer-alert-ok').addEventListener('click', () => {
+  document.getElementById('prayer-alert').style.display = 'none'
+})
+
+function showPrayerAlert(name) {
+  const key = new Date().toDateString() + '_' + name
+  if (lastAlertedPrayer === key) return
+  lastAlertedPrayer = key
+  sessionStorage.setItem('ov_alerted_prayer', key)
+  const modal = document.getElementById('prayer-alert')
+  document.getElementById('prayer-alert-text').textContent = `Da masuk waktu ${name} woiii`
+  modal.style.display = 'flex'
+}
 
 function tickPrayer() {
   if (!prayerToday) return
@@ -399,20 +422,14 @@ function tickPrayer() {
       const s = Math.floor((diff % 60000) / 1000)
       const label = document.getElementById('prayer-label')
       const timer = document.getElementById('prayer-timer')
-      const timeStr = prayerToday[name]
-      label.textContent = `until ${name} (${timeStr})`
+      label.textContent = `until ${name} (${prayerToday[name]})`
       timer.textContent = h > 0
         ? `${h}h ${String(m).padStart(2,'0')}m`
         : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-      const urgent = diff < 600000
-      timer.style.color = urgent ? 'var(--awaiting)' : 'var(--resolve)'
+      timer.style.color = diff < 600000 ? 'var(--awaiting)' : 'var(--resolve)'
       return
     } else {
-      // This prayer just passed — alert once
-      if (lastAlertedPrayer !== name) {
-        lastAlertedPrayer = name
-        setTimeout(() => alert(`🕌 DA MASUK WAKTU ${name.toUpperCase()} WOIII`), 100)
-      }
+      showPrayerAlert(name)
     }
   }
   document.getElementById('prayer-label').textContent = 'Isyak sudah lepas'
