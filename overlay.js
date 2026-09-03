@@ -393,7 +393,7 @@ function parseTime(str) {
   return d
 }
 
-let lastAlertedPrayer = sessionStorage.getItem('ov_alerted_prayer') || null
+const alertedPrayers = new Set(JSON.parse(sessionStorage.getItem('ov_alerted_prayers') || '[]'))
 
 document.getElementById('prayer-alert-ok').addEventListener('click', () => {
   document.getElementById('prayer-alert').style.display = 'none'
@@ -401,12 +401,11 @@ document.getElementById('prayer-alert-ok').addEventListener('click', () => {
 
 function showPrayerAlert(name) {
   const key = new Date().toDateString() + '_' + name
-  if (lastAlertedPrayer === key) return
-  lastAlertedPrayer = key
-  sessionStorage.setItem('ov_alerted_prayer', key)
-  const modal = document.getElementById('prayer-alert')
+  if (alertedPrayers.has(key)) return
+  alertedPrayers.add(key)
+  sessionStorage.setItem('ov_alerted_prayers', JSON.stringify([...alertedPrayers]))
   document.getElementById('prayer-alert-text').textContent = `Da masuk waktu ${name} woiii`
-  modal.style.display = 'flex'
+  document.getElementById('prayer-alert').style.display = 'flex'
 }
 
 function tickPrayer() {
@@ -420,9 +419,8 @@ function tickPrayer() {
       const h = Math.floor(diff / 3600000)
       const m = Math.floor((diff % 3600000) / 60000)
       const s = Math.floor((diff % 60000) / 1000)
-      const label = document.getElementById('prayer-label')
+      document.getElementById('prayer-label').textContent = `until ${name} (${prayerToday[name]})`
       const timer = document.getElementById('prayer-timer')
-      label.textContent = `until ${name} (${prayerToday[name]})`
       timer.textContent = h > 0
         ? `${h}h ${String(m).padStart(2,'0')}m`
         : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
