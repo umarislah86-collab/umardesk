@@ -8,6 +8,7 @@ firebase.initializeApp({
   appId: "1:179174675906:web:0d3bfb01216a1e78e8b25b"
 })
 const db = firebase.firestore()
+db.enablePersistence({ synchronizeTabs: true }).catch(() => {})
 const COL = 'umardesk_tickets'
 const dbAdd    = t  => db.collection(COL).doc(t.id).set(t)
 const dbSet    = t  => db.collection(COL).doc(t.id).set(t)
