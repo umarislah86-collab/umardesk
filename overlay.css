@@ -229,6 +229,17 @@ body {
 .ov-badge-defective  { background: rgba(248,81,73,.15);   color: var(--dispatched); }
 .ov-badge-other      { background: rgba(139,148,158,.15); color: var(--other); }
 
+/* ── Daily counts ──────────────────────────────────────────────────────── */
+.daily-counts {
+  display: flex; gap: 5px; margin: 3px 10px 0;
+}
+.daily-count-item {
+  flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 5px;
+  padding: 4px 6px; display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.daily-count-label { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+.daily-count-val { font-family: 'Barlow Condensed', monospace; font-size: 18px; font-weight: 700; color: var(--text); line-height: 1; }
+
 /* ── Prayer countdown ──────────────────────────────────────────────────── */
 .prayer-countdown {
   display: flex; align-items: center; justify-content: space-between;

@@ -73,6 +73,9 @@ document.body.innerHTML = `
 
     <div id="ov-status-bar" class="ov-status-bar"></div>
 
+    <!-- Daily ticket counts -->
+    <div id="daily-counts" class="daily-counts"></div>
+
     <!-- Prayer countdown -->
     <div id="prayer-countdown" class="prayer-countdown">
       <span id="prayer-label" class="prayer-label">—</span>
@@ -212,6 +215,7 @@ async function submitAction(key, action) {
     watchBtn.textContent = '👀 Watch this ticket'
     watchBtn.classList.remove('ov-watch-done')
     watchBtn.disabled = false
+    refreshDailyCounts()
     setTimeout(() => { el.textContent = ''; el.className = 'ov-result'; watchRow.style.display = 'none' }, 4500)
 
     // Clear preview after logging
@@ -350,6 +354,33 @@ document.getElementById('btn-ov-watch').addEventListener('click', () => {
     toast('Could not find ticket to watch', 'warn')
   }
 })
+
+// ── Daily ticket counts ───────────────────────────────────────────────────
+function getDateISO(daysAgo) {
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  return d.toISOString().slice(0, 10)
+}
+
+function refreshDailyCounts() {
+  const tickets = bridge.getAllTickets()
+  const days = [
+    { label: 'Today',     iso: getDateISO(0) },
+    { label: 'Yesterday', iso: getDateISO(1) },
+    { label: '2 days ago',iso: getDateISO(2) },
+  ]
+  const el = document.getElementById('daily-counts')
+  el.innerHTML = days.map(d => {
+    const count = tickets.filter(t => t.date === d.iso).length
+    return `<div class="daily-count-item">
+      <span class="daily-count-label">${d.label}</span>
+      <span class="daily-count-val">${count}</span>
+    </div>`
+  }).join('')
+}
+
+refreshDailyCounts()
+setInterval(refreshDailyCounts, 10000)
 
 // ── Prayer time countdown ─────────────────────────────────────────────────
 const PRAYERS = ['Subuh','Zohor','Asar','Maghrib','Isyak']
