@@ -75,6 +75,7 @@ function loadTickets() {
     if (doc.exists) excludedSources = new Set(doc.data().excludedSources || [])
   })
   let migrated = false
+  let sourceMigrated = false
   db.collection(COL).onSnapshot(snapshot => {
     allTickets = snapshot.docs.map(d => d.data())
     refreshAll()
@@ -101,7 +102,8 @@ function loadTickets() {
         localStorage.setItem('ud_misc_migrated', '1')
       }
     }
-    if (!localStorage.getItem('ud_source_migrated')) {
+    if (!sourceMigrated && !localStorage.getItem('ud_source_migrated')) {
+      sourceMigrated = true
       const toFix = allTickets.filter(t => (t.source||'').toLowerCase() === 'self service')
       if (toFix.length) {
         const chunks = []
