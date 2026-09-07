@@ -65,12 +65,19 @@ window.addEventListener('DOMContentLoaded', () => {
       chunk.forEach(t => b.delete(db.collection(COL).doc(t.id)))
       return b.commit()
     }))
+    localStorage.removeItem(CACHE_KEY)
     showToast('All data cleared','success')
   })
 })
 
 // ── Storage ───────────────────────────────────────────────────────────────
+const CACHE_KEY = 'ud_tickets_cache'
+
 function loadTickets() {
+  // Instant render from cache while Firestore loads in background
+  const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]')
+  if (cached.length) { allTickets = cached; refreshAll() }
+
   db.collection('umardesk_config').doc('stats_exclusions').get().then(doc => {
     if (doc.exists) excludedSources = new Set(doc.data().excludedSources || [])
   })
@@ -78,6 +85,7 @@ function loadTickets() {
   let sourceMigrated = false
   db.collection(COL).onSnapshot(snapshot => {
     allTickets = snapshot.docs.map(d => d.data())
+    localStorage.setItem(CACHE_KEY, JSON.stringify(allTickets))
     refreshAll()
     if (!migrated && !localStorage.getItem('ud_misc_migrated')) {
       migrated = true
@@ -121,7 +129,7 @@ function loadTickets() {
         localStorage.setItem('ud_source_migrated', '1')
       }
     }
-  }, err => showToast('Firebase: ' + err.message, 'error'))
+  }, err => showToast('Firebase offline — showing cached data', 'error'))
   // Migrate from localStorage if Firebase empty
   const local = JSON.parse(localStorage.getItem('tickets') || '[]')
   if (local.length) {
