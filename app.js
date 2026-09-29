@@ -23,13 +23,18 @@ const ACTIONS = {
   dispatch:  { label: '🚀 Dispatch',         comment: 'dispatched to',       color: '#63b3ed', needsTeam: true  },
 }
 
+// These are the sources used for day-to-day work. Other sources remain in
+// Firestore as searchable reference archives, but should not crowd the normal
+// ticket list.
+const DEFAULT_WORK_SOURCES = new Set(['Expert Q', 'Phone', 'Portal'])
+
 // ── State ─────────────────────────────────────────────────────────────────
 let allTickets = []
 let filteredTickets = []
 let currentPage = 1
 let pageSize = 50
 let sortField = 'date', sortAsc = false
-let searchText = '', filterStatus = new Set(), filterSource = new Set(), filterTeam = new Set(), filterDateFrom = '', filterDateTo = '', filterDuplicates = false, filterExpiredAwaiting = false, filterWatchlist = false
+let searchText = '', filterStatus = new Set(), filterSource = new Set(DEFAULT_WORK_SOURCES), filterTeam = new Set(), filterDateFrom = '', filterDateTo = '', filterDuplicates = false, filterExpiredAwaiting = false, filterWatchlist = false
 let excludedSources = new Set()
 let editingId = null
 let pipWindow = null
@@ -315,7 +320,9 @@ function applyFilters() {
       if (!terms.every(term => fields.includes(term))) return false
     }
     if (filterStatus.size && !filterStatus.has(getStatus(t.comment))) return false
-    if (filterSource.size && !filterSource.has((t.source||'').trim())) return false
+    // A search is intentionally global: reference archives stay hidden during
+    // normal browsing, but matching tickets can always be found.
+    if (!searchText && filterSource.size && !filterSource.has((t.source||'').trim())) return false
     if (filterTeam.size && !filterTeam.has(extractTeam(t.comment)||'')) return false
     if (filterDateFrom && t.date && t.date < filterDateFrom) return false
     if (filterDateTo   && t.date && t.date > filterDateTo)   return false
@@ -357,12 +364,18 @@ function populateSourceFilter() {
   drop.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.addEventListener('change', () => {
       filterSource = new Set([...drop.querySelectorAll('input:checked')].map(c=>c.value))
-      const count = filterSource.size
-      document.getElementById('source-filter-btn').textContent = count === 0 ? 'All Sources ▾' : `${count} Source${count>1?'s':''} ▾`
-      document.getElementById('source-filter-btn').classList.toggle('active', count > 0)
+      updateSourceFilterButton()
       applyFilters(); renderTable()
     })
   })
+  updateSourceFilterButton()
+}
+
+function updateSourceFilterButton() {
+  const button = document.getElementById('source-filter-btn')
+  const count = filterSource.size
+  button.textContent = count === 0 ? 'All Sources ▾' : `${count} Source${count>1?'s':''} ▾`
+  button.classList.toggle('active', count > 0)
 }
 
 function populateTeamFilter() {
@@ -752,18 +765,18 @@ function setupFilters() {
   document.addEventListener('click', () => { statusDrop.classList.remove('open'); sourceDrop.classList.remove('open'); teamDrop.classList.remove('open') })
   document.getElementById('btn-clear-filters').addEventListener('click',()=>{
     searchText=filterDateFrom=filterDateTo=''
-    filterStatus=new Set(); filterSource=new Set(); filterTeam=new Set(); filterDuplicates=false; filterExpiredAwaiting=false; filterWatchlist=false
+    filterStatus=new Set(); filterSource=new Set(DEFAULT_WORK_SOURCES); filterTeam=new Set(); filterDuplicates=false; filterExpiredAwaiting=false; filterWatchlist=false
     document.getElementById('btn-duplicates').classList.remove('active')
     document.getElementById('btn-watchlist').classList.remove('active')
     document.getElementById('btn-expired-awaiting').classList.remove('active')
     document.getElementById('btn-resolve-expired').style.display='none'
     document.getElementById('status-filter-btn').textContent='All Status ▾'
     document.getElementById('status-filter-btn').classList.remove('active')
-    document.getElementById('source-filter-btn').textContent='All Sources ▾'
-    document.getElementById('source-filter-btn').classList.remove('active')
+    updateSourceFilterButton()
     document.getElementById('team-filter-btn').textContent='Resolver Team ▾'
     document.getElementById('team-filter-btn').classList.remove('active')
-    document.querySelectorAll('#status-filter-dropdown input, #source-filter-dropdown input, #team-filter-dropdown input').forEach(cb=>cb.checked=false)
+    document.querySelectorAll('#status-filter-dropdown input, #team-filter-dropdown input').forEach(cb=>cb.checked=false)
+    document.querySelectorAll('#source-filter-dropdown input').forEach(cb=>{ cb.checked=filterSource.has(cb.value) })
     ;['search-input','filter-date-from','filter-date-to'].forEach(id=>{ document.getElementById(id).value='' })
     applyFilters(); renderTable()
   })
